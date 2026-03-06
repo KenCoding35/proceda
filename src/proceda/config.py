@@ -1,4 +1,5 @@
-"""Configuration loading and models."""
+"""ABOUTME: Configuration loading and models.
+ABOUTME: Loads proceda.yaml and provides typed config dataclasses."""
 
 from __future__ import annotations
 
@@ -60,6 +61,7 @@ class LLMConfig:
     api_key_env: str = "ANTHROPIC_API_KEY"
     temperature: float = 0.7
     max_tokens: int = 4096
+    max_retries: int = 3
 
     @property
     def api_key(self) -> str | None:
@@ -123,6 +125,7 @@ class ProcedaConfig:
                 api_key_env=llm.get("api_key_env", config.llm.api_key_env),
                 temperature=llm.get("temperature", config.llm.temperature),
                 max_tokens=llm.get("max_tokens", config.llm.max_tokens),
+                max_retries=llm.get("max_retries", config.llm.max_retries),
             )
 
         if "apps" in data:

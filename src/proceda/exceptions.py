@@ -1,4 +1,5 @@
-"""Proceda exception hierarchy."""
+"""ABOUTME: Proceda exception hierarchy.
+ABOUTME: Defines all custom exceptions used throughout the runtime."""
 
 from __future__ import annotations
 
@@ -51,6 +52,18 @@ class ToolExecutionError(ProcedaError):
 
 class LLMError(ProcedaError):
     """Raised for LLM-related errors."""
+
+
+class LLMRateLimitError(LLMError):
+    """Raised when the LLM API returns a rate limit error."""
+
+
+class LLMTimeoutError(LLMError):
+    """Raised when the LLM API call times out."""
+
+
+class LLMAPIError(LLMError):
+    """Raised when the LLM API returns an error."""
 
 
 class SessionError(ProcedaError):
