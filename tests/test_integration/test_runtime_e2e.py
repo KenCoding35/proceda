@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from skillrunner.config import LLMConfig, SkillRunnerConfig
+from skillrunner.config import SkillRunnerConfig
 from skillrunner.events import CollectorEventSink, EventType
 from skillrunner.llm.runtime import LLMResponse
 from skillrunner.runtime import Runtime
@@ -101,7 +100,7 @@ async def test_runtime_emits_events_in_order():
     runtime = Runtime(config=config)
 
     with patch("skillrunner.llm.runtime.LLMRuntime.complete", side_effect=mock_complete):
-        result = await runtime.run(skill, event_sinks=[collector])
+        await runtime.run(skill, event_sinks=[collector])
 
     event_types = [e.type for e in collector.events]
 

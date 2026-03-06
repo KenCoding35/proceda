@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -12,7 +11,6 @@ from textual.widgets import Footer, Header
 
 from skillrunner.config import SkillRunnerConfig
 from skillrunner.events import EventType, RunEvent
-from skillrunner.human import HumanInterface
 from skillrunner.runtime import Runtime
 from skillrunner.session import (
     ApprovalDecision,
@@ -174,7 +172,8 @@ class SkillRunnerApp(App[None]):
         elif t == EventType.APPROVAL_REQUESTED:
             messages.add_message(
                 "system",
-                f"Approval required: {p.get('approval_type', '')} for step {p.get('step_index', '')}",
+                f"Approval required: {p.get('approval_type', '')}"
+                f" for step {p.get('step_index', '')}",
             )
 
         # Update tool activity

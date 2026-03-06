@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 
@@ -16,7 +14,7 @@ console = Console()
 def replay(
     run_id_or_path: str = typer.Argument(..., help="Run ID, run directory path, or partial match"),
     speed: float = typer.Option(1.0, "--speed", "-s", help="Replay speed multiplier"),
-    run_dir: Optional[str] = typer.Option(None, "--run-dir", help="Base run directory"),
+    run_dir: str | None = typer.Option(None, "--run-dir", help="Base run directory"),
 ) -> None:
     """Replay a previous run from event logs."""
     try:

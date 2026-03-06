@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -14,12 +15,8 @@ from skillrunner.skill import Skill, SkillStep, StepMarker
 _FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 _STEP_HEADING_PATTERN = re.compile(r"^###\s+Step\s+(\d+):\s+(.+)$", re.MULTILINE)
 _MARKER_PATTERNS: dict[StepMarker, re.Pattern[str]] = {
-    StepMarker.PRE_APPROVAL_REQUIRED: re.compile(
-        r"\[PRE-APPROVAL\s+REQUIRED\]", re.IGNORECASE
-    ),
-    StepMarker.APPROVAL_REQUIRED: re.compile(
-        r"\[APPROVAL\s+REQUIRED\]", re.IGNORECASE
-    ),
+    StepMarker.PRE_APPROVAL_REQUIRED: re.compile(r"\[PRE-APPROVAL\s+REQUIRED\]", re.IGNORECASE),
+    StepMarker.APPROVAL_REQUIRED: re.compile(r"\[APPROVAL\s+REQUIRED\]", re.IGNORECASE),
     StepMarker.OPTIONAL: re.compile(r"\[OPTIONAL\]", re.IGNORECASE),
 }
 
@@ -70,9 +67,7 @@ def _parse_steps(body: str, path: str | None = None) -> list[SkillStep]:
         title = match.group(2).strip()
 
         if index in seen_indices:
-            raise SkillParseError(
-                f"Duplicate step number: {index}", line=match.start(), path=path
-            )
+            raise SkillParseError(f"Duplicate step number: {index}", line=match.start(), path=path)
         seen_indices.add(index)
 
         # Extract body: from end of heading to start of next heading (or end of doc)
@@ -140,60 +135,6 @@ def parse_skill(
     )
 
 
-def lint_skill(content: str, path: Path | None = None) -> LintResult:
-    """Lint a SKILL.md file and return warnings and errors."""
-    errors: list[LintIssue] = []
-    warnings: list[LintIssue] = []
-    path_str = str(path) if path else None
-
-    # Try parsing - any parse error is a lint error
-    try:
-        skill = parse_skill(content, path=path)
-    except SkillParseError as e:
-        errors.append(LintIssue(level="error", message=str(e), line=e.line))
-        return LintResult(errors=errors, warnings=warnings, skill=None)
-
-    # Warnings
-    if skill.required_tools is None:
-        warnings.append(
-            LintIssue(
-                level="warning",
-                message="No 'required_tools' declared; consider adding tool requirements",
-            )
-        )
-
-    if skill.step_count > 20:
-        warnings.append(
-            LintIssue(
-                level="warning",
-                message=f"Skill has {skill.step_count} steps; consider breaking into smaller skills",
-            )
-        )
-
-    if len(content) > 50000:
-        warnings.append(
-            LintIssue(
-                level="warning",
-                message=f"Skill file is {len(content)} bytes; large skills may impact LLM performance",
-            )
-        )
-
-    # Check for steps without content
-    for step in skill.steps:
-        if not step.content.strip():
-            warnings.append(
-                LintIssue(
-                    level="warning",
-                    message=f"Step {step.index} ('{step.title}') has no body content",
-                )
-            )
-
-    return LintResult(errors=errors, warnings=warnings, skill=skill)
-
-
-from dataclasses import dataclass, field
-
-
 @dataclass
 class LintIssue:
     """A single lint warning or error."""
@@ -218,3 +159,56 @@ class LintResult:
     @property
     def has_warnings(self) -> bool:
         return len(self.warnings) > 0
+
+
+def lint_skill(content: str, path: Path | None = None) -> LintResult:
+    """Lint a SKILL.md file and return warnings and errors."""
+    errors: list[LintIssue] = []
+    warnings: list[LintIssue] = []
+    # Try parsing - any parse error is a lint error
+    try:
+        skill = parse_skill(content, path=path)
+    except SkillParseError as e:
+        errors.append(LintIssue(level="error", message=str(e), line=e.line))
+        return LintResult(errors=errors, warnings=warnings, skill=None)
+
+    # Warnings
+    if skill.required_tools is None:
+        warnings.append(
+            LintIssue(
+                level="warning",
+                message="No 'required_tools' declared; consider adding tool requirements",
+            )
+        )
+
+    if skill.step_count > 20:
+        warnings.append(
+            LintIssue(
+                level="warning",
+                message=(
+                    f"Skill has {skill.step_count} steps; consider breaking into smaller skills"
+                ),
+            )
+        )
+
+    if len(content) > 50000:
+        warnings.append(
+            LintIssue(
+                level="warning",
+                message=(
+                    f"Skill file is {len(content)} bytes; large skills may impact LLM performance"
+                ),
+            )
+        )
+
+    # Check for steps without content
+    for step in skill.steps:
+        if not step.content.strip():
+            warnings.append(
+                LintIssue(
+                    level="warning",
+                    message=f"Step {step.index} ('{step.title}') has no body content",
+                )
+            )
+
+    return LintResult(errors=errors, warnings=warnings, skill=skill)

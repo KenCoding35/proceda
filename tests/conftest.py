@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from skillrunner.skill import Skill, SkillStep, StepMarker
+from skillrunner.skill import Skill
 
 SAMPLE_SKILL_CONTENT = """\
 ---
@@ -106,12 +106,14 @@ def minimal_skill_content() -> str:
 @pytest.fixture
 def sample_skill() -> Skill:
     from skillrunner.skills.parser import parse_skill
+
     return parse_skill(SAMPLE_SKILL_CONTENT)
 
 
 @pytest.fixture
 def minimal_skill() -> Skill:
     from skillrunner.skills.parser import parse_skill
+
     return parse_skill(MINIMAL_SKILL_CONTENT)
 
 

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from skillrunner.events import RunEvent
 
@@ -19,7 +20,7 @@ class RunDirectoryManager:
 
     def create_run_dir(self, run_id: str | None = None) -> Path:
         """Create a new run directory with timestamp and short ID."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         timestamp = now.strftime("%Y%m%d_%H%M%S")
         short_id = (run_id or uuid.uuid4().hex)[:8]
         dirname = f"{timestamp}_{short_id}"
@@ -117,7 +118,7 @@ class EventLogReader:
         if not self._events_path.exists():
             return []
         events = []
-        with open(self._events_path, "r", encoding="utf-8") as f:
+        with open(self._events_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
@@ -128,7 +129,7 @@ class EventLogReader:
         """Iterate events lazily for large logs."""
         if not self._events_path.exists():
             return
-        with open(self._events_path, "r", encoding="utf-8") as f:
+        with open(self._events_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:

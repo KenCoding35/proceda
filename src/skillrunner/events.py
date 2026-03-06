@@ -5,8 +5,8 @@ from __future__ import annotations
 import enum
 import json
 import uuid
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 
@@ -69,7 +69,7 @@ class RunEvent:
     ) -> RunEvent:
         return RunEvent(
             id=f"evt_{uuid.uuid4().hex[:12]}",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             run_id=run_id,
             type=event_type,
             payload=payload or {},

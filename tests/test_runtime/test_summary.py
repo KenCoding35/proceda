@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from skillrunner.internal.summary import generate_run_summary
 from skillrunner.session import RunSession, RunStatus
-from skillrunner.skill import Skill
 
 
 class TestGenerateRunSummary:

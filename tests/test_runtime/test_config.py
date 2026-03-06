@@ -74,9 +74,7 @@ class TestSkillRunnerConfig:
 
     def test_load_from_file(self, tmp_path: Path) -> None:
         config_file = tmp_path / "skillrunner.yaml"
-        config_file.write_text(
-            "llm:\n  model: test-model\n  temperature: 0.3\n"
-        )
+        config_file.write_text("llm:\n  model: test-model\n  temperature: 0.3\n")
         config = SkillRunnerConfig.load(str(config_file))
         assert config.llm.model == "test-model"
         assert config.llm.temperature == 0.3

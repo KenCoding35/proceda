@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 
 from skillrunner.skills.loader import SKILL_FILENAME
 from skillrunner.skills.parser import lint_skill
-from pathlib import Path
 
 console = Console()
 
@@ -50,9 +51,7 @@ def lint(
             if result.skill.required_tools:  # type: ignore
                 console.print(f"  Required tools: {', '.join(result.skill.required_tools)}")  # type: ignore
         elif result.ok:
-            console.print(
-                f"[green]Skill is valid[/green] with {len(result.warnings)} warning(s)."
-            )
+            console.print(f"[green]Skill is valid[/green] with {len(result.warnings)} warning(s).")
 
         if not result.ok:
             raise typer.Exit(code=2)

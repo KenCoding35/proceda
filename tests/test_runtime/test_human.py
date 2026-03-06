@@ -45,9 +45,7 @@ class TestAutoApproveHumanInterface:
     @pytest.mark.asyncio
     async def test_error_recovery_cancels(self) -> None:
         human = AutoApproveHumanInterface()
-        request = ErrorRecoveryRequest(
-            error=ErrorContext(error_type="TestError", message="oops")
-        )
+        request = ErrorRecoveryRequest(error=ErrorContext(error_type="TestError", message="oops"))
         result = await human.request_error_recovery(request)
         assert result == ErrorRecoveryDecision.CANCEL
 
@@ -82,11 +80,7 @@ class TestScriptedHumanInterface:
 
     @pytest.mark.asyncio
     async def test_scripted_error_recovery(self) -> None:
-        human = ScriptedHumanInterface(
-            error_decisions=[ErrorRecoveryDecision.RETRY]
-        )
-        req = ErrorRecoveryRequest(
-            error=ErrorContext(error_type="E", message="m")
-        )
+        human = ScriptedHumanInterface(error_decisions=[ErrorRecoveryDecision.RETRY])
+        req = ErrorRecoveryRequest(error=ErrorContext(error_type="E", message="m"))
         result = await human.request_error_recovery(req)
         assert result == ErrorRecoveryDecision.RETRY

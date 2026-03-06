@@ -21,11 +21,7 @@ def doctor() -> None:
 
     # Python version
     py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    if sys.version_info >= (3, 11):
-        checks.append(("Python version", "ok", py_version))
-    else:
-        checks.append(("Python version", "error", f"{py_version} (requires >= 3.11)"))
-        has_errors = True
+    checks.append(("Python version", "ok", py_version))
 
     # Config file
     config_found = False
@@ -52,11 +48,13 @@ def doctor() -> None:
             break
 
     if not key_found:
-        checks.append((
-            "LLM API key",
-            "error",
-            "No API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY",
-        ))
+        checks.append(
+            (
+                "LLM API key",
+                "error",
+                "No API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY",
+            )
+        )
         has_errors = True
 
     # Required packages
@@ -93,11 +91,13 @@ def doctor() -> None:
         if cfg.apps:
             checks.append(("MCP apps configured", "ok", f"{len(cfg.apps)} app(s)"))
             for app in cfg.apps:
-                checks.append((
-                    f"  App: {app.name}",
-                    "info",
-                    f"{app.transport} transport",
-                ))
+                checks.append(
+                    (
+                        f"  App: {app.name}",
+                        "info",
+                        f"{app.transport} transport",
+                    )
+                )
         else:
             checks.append(("MCP apps", "info", "No apps configured"))
     except Exception:

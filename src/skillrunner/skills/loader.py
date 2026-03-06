@@ -22,9 +22,7 @@ def load_skill(path: str | Path) -> Skill:
     if resolved.is_dir():
         skill_file = resolved / SKILL_FILENAME
         if not skill_file.exists():
-            raise SkillLoadError(
-                f"No {SKILL_FILENAME} found in directory: {resolved}"
-            )
+            raise SkillLoadError(f"No {SKILL_FILENAME} found in directory: {resolved}")
         return _load_file(skill_file)
 
     if resolved.is_file():

@@ -29,8 +29,8 @@ class ConfigError(SkillRunnerError):
     """Raised when configuration is invalid or missing."""
 
 
-class RuntimeError_(SkillRunnerError):
-    """Raised for runtime execution errors (named with underscore to avoid shadowing builtin)."""
+class ExecutionError(SkillRunnerError):
+    """Raised for runtime execution errors."""
 
 
 class ToolAccessDeniedError(SkillRunnerError):

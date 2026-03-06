@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import sys
-from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -33,8 +30,7 @@ class TerminalEventPrinter:
         if t == EventType.RUN_CREATED:
             self._console.print(
                 Panel(
-                    f"[bold]{p.get('skill_name', '')}[/bold]\n"
-                    f"Steps: {p.get('step_count', 0)}",
+                    f"[bold]{p.get('skill_name', '')}[/bold]\nSteps: {p.get('step_count', 0)}",
                     title="SkillRunner",
                     border_style="blue",
                 )
@@ -42,19 +38,14 @@ class TerminalEventPrinter:
 
         elif t == EventType.STEP_STARTED:
             self._console.print(
-                f"\n[bold cyan]>>> Step {p.get('step_index')}: "
-                f"{p.get('step_title')}[/bold cyan]"
+                f"\n[bold cyan]>>> Step {p.get('step_index')}: {p.get('step_title')}[/bold cyan]"
             )
 
         elif t == EventType.STEP_COMPLETED:
-            self._console.print(
-                f"[green]    Step {p.get('step_index')} completed[/green]"
-            )
+            self._console.print(f"[green]    Step {p.get('step_index')} completed[/green]")
 
         elif t == EventType.STEP_SKIPPED:
-            self._console.print(
-                f"[yellow]    Step {p.get('step_index')} skipped[/yellow]"
-            )
+            self._console.print(f"[yellow]    Step {p.get('step_index')} skipped[/yellow]")
 
         elif t == EventType.MESSAGE_ASSISTANT:
             content = p.get("content", "")
@@ -62,26 +53,20 @@ class TerminalEventPrinter:
                 self._console.print(f"    {content}")
 
         elif t == EventType.TOOL_CALLED:
-            self._console.print(
-                f"    [cyan]Calling tool:[/cyan] {p.get('tool_name')}"
-            )
+            self._console.print(f"    [cyan]Calling tool:[/cyan] {p.get('tool_name')}")
 
         elif t == EventType.TOOL_COMPLETED:
             result = str(p.get("result", ""))[:200]
             self._console.print(f"    [green]Result:[/green] {result}")
 
         elif t == EventType.TOOL_FAILED:
-            self._console.print(
-                f"    [red]Tool error:[/red] {p.get('error', '')}"
-            )
+            self._console.print(f"    [red]Tool error:[/red] {p.get('error', '')}")
 
         elif t == EventType.RUN_COMPLETED:
             self._console.print("\n[bold green]Run completed successfully.[/bold green]")
 
         elif t == EventType.RUN_FAILED:
-            self._console.print(
-                f"\n[bold red]Run failed:[/bold red] {p.get('error', '')}"
-            )
+            self._console.print(f"\n[bold red]Run failed:[/bold red] {p.get('error', '')}")
 
         elif t == EventType.RUN_CANCELLED:
             self._console.print("\n[bold yellow]Run cancelled.[/bold yellow]")
@@ -92,9 +77,9 @@ class TerminalEventPrinter:
 
 def run(
     path: str = typer.Argument(..., help="Path to a SKILL.md file or directory"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="LLM model to use"),
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Config file path"),
-    var: Optional[list[str]] = typer.Option(None, "--var", "-v", help="Variables as key=value"),
+    model: str | None = typer.Option(None, "--model", "-m", help="LLM model to use"),
+    config: str | None = typer.Option(None, "--config", "-c", help="Config file path"),
+    var: list[str] | None = typer.Option(None, "--var", "-v", help="Variables as key=value"),
 ) -> None:
     """Run a skill interactively in the terminal."""
     try:
@@ -122,9 +107,7 @@ def run(
         runtime = Runtime(config=cfg, human=human)
         printer = TerminalEventPrinter(console)
 
-        result = asyncio.run(
-            runtime.run(skill, variables=variables, event_sinks=[printer])
-        )
+        result = asyncio.run(runtime.run(skill, variables=variables, event_sinks=[printer]))
 
         # Print summary
         console.print()

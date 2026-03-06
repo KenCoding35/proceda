@@ -6,14 +6,13 @@ from typing import Protocol
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm, Prompt
+from rich.prompt import Prompt
 from rich.table import Table
 
 from skillrunner.session import (
     ApprovalDecision,
     ApprovalRequest,
     ClarificationRequest,
-    ErrorContext,
     ErrorRecoveryDecision,
     ErrorRecoveryRequest,
 )
@@ -26,7 +25,9 @@ class HumanInterface(Protocol):
 
     async def request_clarification(self, request: ClarificationRequest) -> str: ...
 
-    async def request_error_recovery(self, request: ErrorRecoveryRequest) -> ErrorRecoveryDecision: ...
+    async def request_error_recovery(
+        self, request: ErrorRecoveryRequest
+    ) -> ErrorRecoveryDecision: ...
 
 
 class TerminalHumanInterface:

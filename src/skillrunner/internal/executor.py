@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from datetime import UTC, datetime
+from typing import Any
 
 from skillrunner.events import EventType, RunEvent
-from skillrunner.exceptions import ApprovalRejectedError, LLMError
+from skillrunner.exceptions import ApprovalRejectedError
 from skillrunner.human import HumanInterface
 from skillrunner.internal.context import ContextManager
 from skillrunner.internal.tool_executor import ToolExecutor
@@ -20,8 +21,6 @@ from skillrunner.session import (
     ApprovalRequest,
     ClarificationRequest,
     ErrorContext,
-    ErrorRecoveryDecision,
-    ErrorRecoveryRequest,
     RunMessage,
     RunSession,
     RunStatus,
@@ -94,13 +93,13 @@ class Executor:
                 # Handle pre-approval
                 if step.requires_pre_approval:
                     decision = await self._request_approval(
-                        step.index, step.title, "pre_step",
+                        step.index,
+                        step.title,
+                        "pre_step",
                         f"Step {step.index} requires pre-approval before execution.",
                     )
                     if decision == ApprovalDecision.REJECT:
-                        raise ApprovalRejectedError(
-                            f"Pre-approval rejected for step {step.index}"
-                        )
+                        raise ApprovalRejectedError(f"Pre-approval rejected for step {step.index}")
                     if decision == ApprovalDecision.SKIP:
                         session.skipped_steps.append(step.index)
                         await self._emit(
@@ -119,13 +118,13 @@ class Executor:
                 # Handle post-approval
                 if step.requires_post_approval:
                     decision = await self._request_approval(
-                        step.index, step.title, "post_step",
+                        step.index,
+                        step.title,
+                        "post_step",
                         f"Step {step.index} completed. Approval required before advancing.",
                     )
                     if decision == ApprovalDecision.REJECT:
-                        raise ApprovalRejectedError(
-                            f"Post-approval rejected for step {step.index}"
-                        )
+                        raise ApprovalRejectedError(f"Post-approval rejected for step {step.index}")
 
                 session.complete_current_step()
                 await self._emit(
@@ -153,7 +152,9 @@ class Executor:
         except ApprovalRejectedError:
             session.set_status(RunStatus.CANCELLED)
             await self._emit(
-                RunEvent.create(session.id, EventType.RUN_CANCELLED, {"reason": "approval_rejected"})
+                RunEvent.create(
+                    session.id, EventType.RUN_CANCELLED, {"reason": "approval_rejected"}
+                )
             )
             await self._emit_status_change(RunStatus.CANCELLED)
         except Exception as e:
@@ -256,9 +257,7 @@ class Executor:
 
         if tool_call.name == "complete_step":
             summary = tool_call.arguments.get("summary", "Step completed.")
-            session.add_message(
-                RunMessage.create("tool", summary, tool_call_id=tool_call.id)
-            )
+            session.add_message(RunMessage.create("tool", summary, tool_call_id=tool_call.id))
             await self._emit(
                 RunEvent.create(
                     session.id,
@@ -272,9 +271,7 @@ class Executor:
             question = tool_call.arguments.get("question", "")
             options = tool_call.arguments.get("options", [])
 
-            request = ClarificationRequest(
-                question=question, options=options, context=None
-            )
+            request = ClarificationRequest(question=question, options=options, context=None)
 
             session.pending_clarification = request
             session.set_status(RunStatus.AWAITING_INPUT)
@@ -303,9 +300,7 @@ class Executor:
             await self._emit_status_change(RunStatus.RUNNING)
 
             # Feed answer back as tool result
-            session.add_message(
-                RunMessage.create("tool", answer, tool_call_id=tool_call.id)
-            )
+            session.add_message(RunMessage.create("tool", answer, tool_call_id=tool_call.id))
 
         return None
 
@@ -328,9 +323,7 @@ class Executor:
         else:
             # No tool executor - return error
             error_msg = f"Tool '{tool_call.name}' is not available (no MCP apps configured)."
-            session.add_message(
-                RunMessage.create("tool", error_msg, tool_call_id=tool_call.id)
-            )
+            session.add_message(RunMessage.create("tool", error_msg, tool_call_id=tool_call.id))
             await self._emit(
                 RunEvent.create(
                     session.id,
@@ -396,7 +389,7 @@ class Executor:
                 step_index=step_index,
                 approval_type=approval_type,  # type: ignore
                 decision=decision,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
         )
 

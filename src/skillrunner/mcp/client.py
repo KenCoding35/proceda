@@ -65,18 +65,21 @@ class StdioMCPClient(MCPClient):
         self.app.connected = True
 
         # Send initialize request
-        await self._send_request("initialize", {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {"name": "skillrunner", "version": "0.1.0"},
-        })
+        await self._send_request(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "skillrunner", "version": "0.1.0"},
+            },
+        )
 
     async def disconnect(self) -> None:
         if self._process:
             try:
                 self._process.stdin.close()  # type: ignore
                 await asyncio.wait_for(self._process.wait(), timeout=5.0)
-            except (asyncio.TimeoutError, ProcessLookupError):
+            except (TimeoutError, ProcessLookupError):
                 self._process.kill()
             self._process = None
             self.app.connected = False
@@ -98,10 +101,13 @@ class StdioMCPClient(MCPClient):
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> MCPToolResult:
         try:
-            result = await self._send_request("tools/call", {
-                "name": tool_name,
-                "arguments": arguments,
-            })
+            result = await self._send_request(
+                "tools/call",
+                {
+                    "name": tool_name,
+                    "arguments": arguments,
+                },
+            )
             return self._parse_result(tool_name, result)
         except Exception as e:
             return MCPToolResult(
@@ -209,10 +215,13 @@ class HTTPMCPClient(MCPClient):
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> MCPToolResult:
         try:
-            result = await self._post("tools/call", {
-                "name": tool_name,
-                "arguments": arguments,
-            })
+            result = await self._post(
+                "tools/call",
+                {
+                    "name": tool_name,
+                    "arguments": arguments,
+                },
+            )
             content_parts = result.get("content", [])
             text = "\n".join(p.get("text", "") for p in content_parts if p.get("type") == "text")
             return MCPToolResult(

@@ -5,8 +5,7 @@ from __future__ import annotations
 import pytest
 
 from skillrunner.exceptions import SkillParseError
-from skillrunner.skill import StepMarker
-from skillrunner.skills.parser import LintResult, lint_skill, parse_skill
+from skillrunner.skills.parser import lint_skill, parse_skill
 from tests.conftest import (
     MALFORMED_SKILL_DUPLICATE_STEPS,
     MALFORMED_SKILL_NO_FRONTMATTER,
@@ -124,7 +123,10 @@ class TestParseSkillErrors:
             parse_skill(content)
 
     def test_invalid_required_tools_type(self) -> None:
-        content = "---\nname: test\ndescription: test\nrequired_tools: not-a-list\n---\n\n### Step 1: Step\nContent."
+        content = (
+            "---\nname: test\ndescription: test\n"
+            "required_tools: not-a-list\n---\n\n### Step 1: Step\nContent."
+        )
         with pytest.raises(SkillParseError, match="must be a list"):
             parse_skill(content)
 
@@ -147,7 +149,10 @@ class TestLintSkill:
         assert len(result.errors) > 0
 
     def test_lint_empty_step_body(self) -> None:
-        content = "---\nname: test\ndescription: test\nrequired_tools:\n  - tool\n---\n\n### Step 1: Empty\n\n### Step 2: Not empty\nContent here."
+        content = (
+            "---\nname: test\ndescription: test\nrequired_tools:\n  - tool\n---\n\n"
+            "### Step 1: Empty\n\n### Step 2: Not empty\nContent here."
+        )
         result = lint_skill(content)
         assert result.ok
         assert any("no body content" in w.message for w in result.warnings)

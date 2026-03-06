@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 
@@ -12,9 +10,9 @@ console = Console()
 
 def dev(
     path: str = typer.Argument(..., help="Path to a SKILL.md file or directory"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="LLM model to use"),
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Config file path"),
-    var: Optional[list[str]] = typer.Option(None, "--var", "-v", help="Variables as key=value"),
+    model: str | None = typer.Option(None, "--model", "-m", help="LLM model to use"),
+    config: str | None = typer.Option(None, "--config", "-c", help="Config file path"),
+    var: list[str] | None = typer.Option(None, "--var", "-v", help="Variables as key=value"),
 ) -> None:
     """Run a skill in full-screen TUI dev mode."""
     try:

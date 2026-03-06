@@ -7,7 +7,6 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 from skillrunner.events import EventType, RunEvent
 from skillrunner.store.event_log import EventLogReader
@@ -94,7 +93,9 @@ class ReplayRenderer:
                 c.print(f"  [dim italic]Thinking: {content[:150]}...[/dim italic]")
 
         elif t == EventType.TOOL_CALLED:
-            c.print(f"  [cyan]Tool call:[/cyan] {p.get('tool_name')}({_fmt_args(p.get('arguments', {}))})")
+            tool = p.get("tool_name")
+            args = _fmt_args(p.get("arguments", {}))
+            c.print(f"  [cyan]Tool call:[/cyan] {tool}({args})")
 
         elif t == EventType.TOOL_COMPLETED:
             result = p.get("result", "")
@@ -104,7 +105,9 @@ class ReplayRenderer:
             c.print(f"  [red]Tool failed:[/red] {p.get('error', '')}")
 
         elif t == EventType.APPROVAL_REQUESTED:
-            c.print(f"  [yellow]Approval requested:[/yellow] {p.get('approval_type')} for step {p.get('step_index')}")
+            atype = p.get("approval_type")
+            step = p.get("step_index")
+            c.print(f"  [yellow]Approval requested:[/yellow] {atype} for step {step}")
 
         elif t == EventType.APPROVAL_RESPONDED:
             c.print(f"  [yellow]Approval:[/yellow] {p.get('decision')}")

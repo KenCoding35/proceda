@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from skillrunner.config import SkillRunnerConfig
 from skillrunner.events import (
     CompositeEventSink,
     EventType,
-    NullEventSink,
     RunEvent,
 )
 from skillrunner.human import AutoApproveHumanInterface, HumanInterface
-from skillrunner.internal.context import ContextManager
 from skillrunner.internal.executor import Executor
 from skillrunner.internal.summary import generate_run_summary
 from skillrunner.internal.tool_executor import ToolExecutor
@@ -140,15 +139,17 @@ class Runtime:
         )
 
         # Write metadata
-        log_writer.write_metadata({
-            "run_id": session.id,
-            "skill_name": skill.name,
-            "skill_id": skill.id,
-            "step_count": skill.step_count,
-            "variables": variables or {},
-            "model": self._config.llm.model,
-            "created_at": session.created_at.isoformat(),
-        })
+        log_writer.write_metadata(
+            {
+                "run_id": session.id,
+                "skill_name": skill.name,
+                "skill_id": skill.id,
+                "step_count": skill.step_count,
+                "variables": variables or {},
+                "model": self._config.llm.model,
+                "created_at": session.created_at.isoformat(),
+            }
+        )
 
         # Connect MCP apps
         orchestrator = MCPOrchestrator(

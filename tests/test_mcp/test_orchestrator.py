@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from skillrunner.config import SecurityConfig
-from skillrunner.exceptions import ToolAccessDeniedError
 from skillrunner.mcp.models import MCPTool
 from skillrunner.mcp.orchestrator import MCPOrchestrator
 

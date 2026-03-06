@@ -15,24 +15,82 @@ class TestReplayRenderer:
     @pytest.mark.asyncio
     async def _write_sample_events(self, run_dir: Path) -> None:
         writer = EventLogWriter(run_dir)
-        writer.write_metadata({
-            "run_id": "run_test",
-            "skill_name": "test-skill",
-            "model": "test-model",
-        })
+        writer.write_metadata(
+            {
+                "run_id": "run_test",
+                "skill_name": "test-skill",
+                "model": "test-model",
+            }
+        )
         await writer.open()
 
+        rid = "run_test"
         events = [
-            RunEvent.create("run_test", EventType.RUN_CREATED, {"skill_name": "test-skill", "step_count": 2}),
-            RunEvent.create("run_test", EventType.STATUS_CHANGED, {"status": "running"}),
-            RunEvent.create("run_test", EventType.STEP_STARTED, {"step_index": 1, "step_title": "First"}),
-            RunEvent.create("run_test", EventType.MESSAGE_ASSISTANT, {"content": "Working on step 1"}),
-            RunEvent.create("run_test", EventType.TOOL_CALLED, {"tool_name": "test__tool", "arguments": {"x": 1}}),
-            RunEvent.create("run_test", EventType.TOOL_COMPLETED, {"tool_name": "test__tool", "result": "done"}),
-            RunEvent.create("run_test", EventType.STEP_COMPLETED, {"step_index": 1, "step_title": "First"}),
-            RunEvent.create("run_test", EventType.STEP_STARTED, {"step_index": 2, "step_title": "Second"}),
-            RunEvent.create("run_test", EventType.STEP_COMPLETED, {"step_index": 2, "step_title": "Second"}),
-            RunEvent.create("run_test", EventType.RUN_COMPLETED, {}),
+            RunEvent.create(
+                rid,
+                EventType.RUN_CREATED,
+                {
+                    "skill_name": "test-skill",
+                    "step_count": 2,
+                },
+            ),
+            RunEvent.create(rid, EventType.STATUS_CHANGED, {"status": "running"}),
+            RunEvent.create(
+                rid,
+                EventType.STEP_STARTED,
+                {
+                    "step_index": 1,
+                    "step_title": "First",
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.MESSAGE_ASSISTANT,
+                {
+                    "content": "Working on step 1",
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.TOOL_CALLED,
+                {
+                    "tool_name": "test__tool",
+                    "arguments": {"x": 1},
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.TOOL_COMPLETED,
+                {
+                    "tool_name": "test__tool",
+                    "result": "done",
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.STEP_COMPLETED,
+                {
+                    "step_index": 1,
+                    "step_title": "First",
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.STEP_STARTED,
+                {
+                    "step_index": 2,
+                    "step_title": "Second",
+                },
+            ),
+            RunEvent.create(
+                rid,
+                EventType.STEP_COMPLETED,
+                {
+                    "step_index": 2,
+                    "step_title": "Second",
+                },
+            ),
+            RunEvent.create(rid, EventType.RUN_COMPLETED, {}),
         ]
 
         for event in events:

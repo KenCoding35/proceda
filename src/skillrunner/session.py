@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -72,7 +72,7 @@ class RunMessage:
             id=f"msg_{uuid.uuid4().hex[:12]}",
             role=role,
             content=content,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             tool_call_id=tool_call_id,
             app_name=app_name,
             tool_calls=tool_calls,
@@ -163,14 +163,16 @@ class RunSession:
     approval_records: list[ApprovalRecord] = field(default_factory=list)
     completed_steps: list[int] = field(default_factory=list)
     skipped_steps: list[int] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    last_activity_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_activity_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     variables: dict[str, str] = field(default_factory=dict)
 
     @staticmethod
-    def create(skill_id: str, skill_name: str, variables: dict[str, str] | None = None) -> RunSession:
+    def create(
+        skill_id: str, skill_name: str, variables: dict[str, str] | None = None
+    ) -> RunSession:
         return RunSession(
             id=f"run_{uuid.uuid4().hex[:12]}",
             skill_id=skill_id,
@@ -181,15 +183,15 @@ class RunSession:
         )
 
     def touch(self) -> None:
-        self.last_activity_at = datetime.now(timezone.utc)
+        self.last_activity_at = datetime.now(UTC)
 
     def set_status(self, status: RunStatus) -> None:
         self.status = status
         self.touch()
         if status == RunStatus.RUNNING and self.started_at is None:
-            self.started_at = datetime.now(timezone.utc)
+            self.started_at = datetime.now(UTC)
         if status.is_terminal:
-            self.completed_at = datetime.now(timezone.utc)
+            self.completed_at = datetime.now(UTC)
 
     def add_message(self, message: RunMessage) -> None:
         self.messages.append(message)

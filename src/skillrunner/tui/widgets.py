@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from rich.text import Text
-from textual.widgets import Static, RichLog
+from textual.widgets import RichLog, Static
 
 from skillrunner.skill import Skill
 
@@ -148,8 +148,4 @@ class StatusBarWidget(Static):
             "cancelled": "bold yellow",
         }
         color = status_colors.get(self._status, "white")
-        self.update(
-            Text.from_markup(
-                f"[{color}]Status: {self._status}[/{color}]{self._hint}"
-            )
-        )
+        self.update(Text.from_markup(f"[{color}]Status: {self._status}[/{color}]{self._hint}"))

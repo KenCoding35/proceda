@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
-import pytest
-
 from skillrunner.session import (
-    ApprovalDecision,
-    ApprovalRecord,
     ApprovalRequest,
     ClarificationRequest,
-    ErrorContext,
-    ErrorRecoveryDecision,
     RunMessage,
     RunResult,
     RunSession,
