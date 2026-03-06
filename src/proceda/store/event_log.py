@@ -7,7 +7,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 from proceda.events import RunEvent
 
@@ -56,7 +56,7 @@ class EventLogWriter:
         self._run_dir = run_dir
         self._events_path = run_dir / "events.jsonl"
         self._artifacts_dir = run_dir / "artifacts"
-        self._file = None
+        self._file: IO[str] | None = None
 
     async def open(self) -> None:
         self._file = open(self._events_path, "a", encoding="utf-8")
@@ -105,7 +105,8 @@ class EventLogReader:
         """Read run metadata."""
         if not self._metadata_path.exists():
             return {}
-        return json.loads(self._metadata_path.read_text(encoding="utf-8"))
+        result: dict[str, Any] = json.loads(self._metadata_path.read_text(encoding="utf-8"))
+        return result
 
     def read_summary(self) -> str | None:
         """Read run summary."""

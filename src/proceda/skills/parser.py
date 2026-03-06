@@ -6,6 +6,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -21,7 +22,7 @@ _MARKER_PATTERNS: dict[StepMarker, re.Pattern[str]] = {
 }
 
 
-def _parse_frontmatter(content: str, path: str | None = None) -> tuple[dict, str]:
+def _parse_frontmatter(content: str, path: str | None = None) -> tuple[dict[str, Any], str]:
     """Extract YAML frontmatter and return (metadata, body)."""
     match = _FRONTMATTER_PATTERN.match(content)
     if not match:

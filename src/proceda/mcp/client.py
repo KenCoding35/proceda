@@ -150,7 +150,8 @@ class StdioMCPClient(MCPClient):
                 f"{error.get('message', 'Unknown error')} (code: {error.get('code')})",
             )
 
-        return response.get("result", {})
+        result: dict[str, Any] = response.get("result", {})
+        return result
 
     def _parse_result(self, tool_name: str, result: dict[str, Any]) -> MCPToolResult:
         content_parts = result.get("content", [])
@@ -260,4 +261,5 @@ class HTTPMCPClient(MCPClient):
                 f"{error.get('message', 'Unknown error')} (code: {error.get('code')})",
             )
 
-        return data.get("result", {})
+        result: dict[str, Any] = data.get("result", {})
+        return result

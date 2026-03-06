@@ -134,7 +134,7 @@ class ReplayRenderer:
             pass  # Don't clutter replay with status changes
 
 
-def _fmt_args(args: dict) -> str:
+def _fmt_args(args: dict[str, object]) -> str:
     """Format tool arguments for display."""
     if not args:
         return ""

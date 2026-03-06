@@ -126,18 +126,18 @@ class StatusBarWidget(Static):
         self._hint = ""
 
     def on_mount(self) -> None:
-        self._render()
+        self._refresh_display()
 
     def update_status(self, status: str) -> None:
         self._status = status
         self._hint = ""
-        self._render()
+        self._refresh_display()
 
     def show_approval_hint(self) -> None:
         self._hint = "  [a]Approve  [r]Reject  [s]Skip"
-        self._render()
+        self._refresh_display()
 
-    def _render(self) -> None:
+    def _refresh_display(self) -> None:
         status_colors = {
             "created": "dim",
             "running": "green",

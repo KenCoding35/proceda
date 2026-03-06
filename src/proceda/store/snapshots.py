@@ -11,10 +11,10 @@ class SnapshotStore:
     def __init__(self, run_dir: Path) -> None:
         self._run_dir = run_dir
 
-    async def save_snapshot(self, session_data: dict) -> None:
+    async def save_snapshot(self, session_data: dict[str, object]) -> None:
         """Save a session snapshot (v2)."""
         raise NotImplementedError("Snapshots are a v2 feature")
 
-    async def load_snapshot(self) -> dict | None:
+    async def load_snapshot(self) -> dict[str, object] | None:
         """Load a session snapshot (v2)."""
         raise NotImplementedError("Snapshots are a v2 feature")
