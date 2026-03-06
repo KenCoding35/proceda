@@ -131,7 +131,7 @@ class ProcedaApp(App[None]):
 
     async def on_mount(self) -> None:
         """Start the skill execution when the app mounts."""
-        self.run_worker(self._execute_skill, thread=True)  # type: ignore[arg-type]
+        self.run_worker(self._execute_skill, thread=True)
 
     async def _execute_skill(self) -> None:
         """Run the skill in a background thread."""

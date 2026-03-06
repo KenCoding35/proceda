@@ -10,7 +10,7 @@ test:
 	uv run pytest -q
 
 typecheck:
-	uv run mypy src/
+	uvx ty check src/
 
 check: lint format test typecheck
 
