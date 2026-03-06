@@ -1,4 +1,5 @@
-"""Session data models: mutable run state and related types."""
+"""ABOUTME: Session data models: mutable run state and related types.
+ABOUTME: Defines RunMessage, RunSession, approval/error types, and run lifecycle."""
 
 from __future__ import annotations
 
@@ -59,6 +60,7 @@ class RunMessage:
     tool_call_id: str | None = None
     app_name: str | None = None
     tool_calls: list[ToolCall] | None = None
+    is_critical: bool = False
 
     @staticmethod
     def create(
@@ -67,6 +69,7 @@ class RunMessage:
         tool_call_id: str | None = None,
         app_name: str | None = None,
         tool_calls: list[ToolCall] | None = None,
+        is_critical: bool = False,
     ) -> RunMessage:
         return RunMessage(
             id=f"msg_{uuid.uuid4().hex[:12]}",
@@ -76,6 +79,7 @@ class RunMessage:
             tool_call_id=tool_call_id,
             app_name=app_name,
             tool_calls=tool_calls,
+            is_critical=is_critical,
         )
 
 

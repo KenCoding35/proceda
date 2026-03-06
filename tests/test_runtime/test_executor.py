@@ -1,5 +1,5 @@
-# ABOUTME: Tests for executor bug fixes: iteration exhaustion, pre-approval context,
-# ABOUTME: and status.changed event on failure.
+# ABOUTME: Tests for executor: iteration exhaustion, pre-approval context,
+# ABOUTME: status.changed on failure, two-tier text handling, and tool call circuit breaker.
 
 from __future__ import annotations
 
@@ -8,10 +8,16 @@ from unittest.mock import AsyncMock
 import pytest
 
 from proceda.events import CollectorEventSink, EventType
-from proceda.human import AutoApproveHumanInterface
+from proceda.human import AutoApproveHumanInterface, ScriptedHumanInterface
 from proceda.internal.executor import Executor
 from proceda.llm.runtime import LLMResponse
-from proceda.session import ApprovalDecision, RunSession, RunStatus, ToolCall
+from proceda.session import (
+    ApprovalDecision,
+    ErrorRecoveryDecision,
+    RunSession,
+    RunStatus,
+    ToolCall,
+)
 from proceda.skills.parser import parse_skill
 
 ONE_STEP_SKILL = """\
@@ -81,6 +87,8 @@ class TestIterationExhaustion:
             tool_executor=None,
             human=AutoApproveHumanInterface(),
             emit=collector.handle,
+            # High threshold so iteration exhaustion fires before force-complete
+            max_text_responses_before_prompt=100,
         )
 
         await executor.execute()
@@ -180,3 +188,190 @@ class TestFailureStatusChanged:
             if e.type == EventType.STATUS_CHANGED and e.payload.get("status") == "failed"
         ]
         assert len(status_events) == 1
+
+
+def _make_app_tool_response(tool_name: str = "app__do_thing") -> LLMResponse:
+    return LLMResponse(
+        content="",
+        tool_calls=[
+            ToolCall(
+                id=ToolCall.generate_id(),
+                name=tool_name,
+                arguments={},
+            )
+        ],
+    )
+
+
+class TestTwoTierTextResponse:
+    """Item 5: Two-tier consecutive text response handling."""
+
+    @pytest.mark.asyncio
+    async def test_force_complete_after_hard_cap(self) -> None:
+        """With max_text_before_prompt=2, hard cap=10. After 10 text responses, step
+        should be force-completed. Nudge messages should appear at multiples of 2."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        call_count = 0
+
+        async def mock_complete(messages, tools=None):
+            nonlocal call_count
+            call_count += 1
+            return _make_text_only_response(f"Still thinking... ({call_count})")
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=None,
+            human=AutoApproveHumanInterface(),
+            emit=collector.handle,
+            max_text_responses_before_prompt=2,
+        )
+
+        await executor.execute()
+
+        # Step force-completed, run should complete (not fail)
+        assert session.status == RunStatus.COMPLETED
+
+        # Nudges should have been sent at text_only_count 2, 4, 6, 8
+        nudge_msgs = [m for m in session.messages if m.role == "user" and "stuck" in m.content]
+        assert len(nudge_msgs) == 4
+
+        # Force-complete system message should be present
+        force_msgs = [
+            m for m in session.messages if m.role == "system" and "force-completed" in m.content
+        ]
+        assert len(force_msgs) == 1
+
+
+class TestToolCallCircuitBreaker:
+    """Item 6: Per-step max tool calls circuit breaker."""
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_fires_on_limit(self) -> None:
+        """LLM keeps making app tool calls. With limit=3, after 3 calls, error recovery
+        fires. With CANCEL decision, ExecutionError should be raised."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        async def mock_complete(messages, tools=None):
+            return _make_app_tool_response("app__do_thing")
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        mock_tool_executor = AsyncMock()
+        mock_tool_executor.execute = AsyncMock(
+            return_value={"content": "ok", "tool_name": "app__do_thing"}
+        )
+
+        human = ScriptedHumanInterface(error_decisions=[ErrorRecoveryDecision.CANCEL])
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=mock_tool_executor,
+            human=human,
+            emit=collector.handle,
+            max_tool_calls_per_step=3,
+        )
+
+        await executor.execute()
+
+        assert session.status == RunStatus.FAILED
+        assert session.pending_error is not None
+        assert "cancelled" in session.pending_error.message.lower()
+
+        # Error recovery events should be emitted
+        event_types = [e.type for e in collector.events]
+        assert EventType.ERROR_RECOVERY_REQUESTED in event_types
+        assert EventType.ERROR_RECOVERY_SELECTED in event_types
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_retry_resets_counter(self) -> None:
+        """RETRY resets the counter, then hitting limit again with CANCEL stops."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        async def mock_complete(messages, tools=None):
+            return _make_app_tool_response("app__do_thing")
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        mock_tool_executor = AsyncMock()
+        mock_tool_executor.execute = AsyncMock(
+            return_value={"content": "ok", "tool_name": "app__do_thing"}
+        )
+
+        # First RETRY (resets counter), then CANCEL on second breach
+        human = ScriptedHumanInterface(
+            error_decisions=[ErrorRecoveryDecision.RETRY, ErrorRecoveryDecision.CANCEL]
+        )
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=mock_tool_executor,
+            human=human,
+            emit=collector.handle,
+            max_tool_calls_per_step=3,
+        )
+
+        await executor.execute()
+
+        assert session.status == RunStatus.FAILED
+
+        # Should have 2 error recovery requested events (one per breach)
+        recovery_events = collector.of_type(EventType.ERROR_RECOVERY_REQUESTED)
+        assert len(recovery_events) == 2
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_skip_advances(self) -> None:
+        """SKIP decision: step is not completed but execution continues."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        async def mock_complete(messages, tools=None):
+            return _make_app_tool_response("app__do_thing")
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        mock_tool_executor = AsyncMock()
+        mock_tool_executor.execute = AsyncMock(
+            return_value={"content": "ok", "tool_name": "app__do_thing"}
+        )
+
+        human = ScriptedHumanInterface(error_decisions=[ErrorRecoveryDecision.SKIP])
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=mock_tool_executor,
+            human=human,
+            emit=collector.handle,
+            max_tool_calls_per_step=3,
+        )
+
+        await executor.execute()
+
+        # SKIP returns from _execute_step, then execute() calls complete_current_step
+        # and the run completes
+        assert session.status == RunStatus.COMPLETED
