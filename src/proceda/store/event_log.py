@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
@@ -10,6 +11,23 @@ from pathlib import Path
 from typing import IO, Any
 
 from proceda.events import RunEvent
+
+_SECRET_PATTERN = re.compile(r"(key|token|secret|password|auth|credential)", re.IGNORECASE)
+
+
+def _redact_dict(data: dict[str, Any]) -> dict[str, Any]:
+    """Recursively redact values whose keys match secret patterns."""
+    result: dict[str, Any] = {}
+    for k, v in data.items():
+        if _SECRET_PATTERN.search(k):
+            result[k] = "**REDACTED**"
+        elif isinstance(v, dict):
+            result[k] = _redact_dict(v)
+        elif isinstance(v, list):
+            result[k] = [_redact_dict(item) if isinstance(item, dict) else item for item in v]
+        else:
+            result[k] = v
+    return result
 
 
 class RunDirectoryManager:
@@ -52,11 +70,12 @@ class RunDirectoryManager:
 class EventLogWriter:
     """Writes events as JSONL to a run directory."""
 
-    def __init__(self, run_dir: Path) -> None:
+    def __init__(self, run_dir: Path, redact_secrets: bool = False) -> None:
         self._run_dir = run_dir
         self._events_path = run_dir / "events.jsonl"
         self._artifacts_dir = run_dir / "artifacts"
         self._file: IO[str] | None = None
+        self._redact = redact_secrets
 
     async def open(self) -> None:
         self._file = open(self._events_path, "a", encoding="utf-8")
@@ -65,6 +84,14 @@ class EventLogWriter:
         """Write an event to the log (implements EventSink protocol)."""
         if self._file is None:
             await self.open()
+        if self._redact:
+            event = RunEvent(
+                id=event.id,
+                timestamp=event.timestamp,
+                run_id=event.run_id,
+                type=event.type,
+                payload=_redact_dict(event.payload),
+            )
         line = event.to_json()
         self._file.write(line + "\n")  # type: ignore
         self._file.flush()  # type: ignore
@@ -77,7 +104,8 @@ class EventLogWriter:
     def write_metadata(self, metadata: dict[str, Any]) -> None:
         """Write run metadata to metadata.json."""
         meta_path = self._run_dir / "metadata.json"
-        meta_path.write_text(json.dumps(metadata, indent=2, default=str), encoding="utf-8")
+        data = _redact_dict(metadata) if self._redact else metadata
+        meta_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
 
     def write_summary(self, summary: str) -> None:
         """Write run summary to summary.txt."""

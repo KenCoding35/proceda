@@ -8,6 +8,7 @@ import pytest
 
 from proceda.config import ProcedaConfig
 from proceda.events import CollectorEventSink, EventType
+from proceda.exceptions import ExecutionError
 from proceda.llm.runtime import LLMResponse
 from proceda.runtime import Runtime
 from proceda.session import RunStatus, ToolCall
@@ -111,3 +112,27 @@ async def test_runtime_emits_events_in_order():
     # run.completed should be the last lifecycle event (before the final status.changed)
     last_status_idx = len(event_types) - 1 - event_types[::-1].index(EventType.STATUS_CHANGED)
     assert event_types.index(EventType.RUN_COMPLETED) < last_status_idx
+
+
+SKILL_WITH_REQUIRED_TOOLS = """\
+---
+name: tool-requiring
+description: Skill that requires a nonexistent tool
+required_tools:
+  - nonexistent__magic_tool
+---
+
+### Step 1: Use tool
+Use the magic tool.
+"""
+
+
+@pytest.mark.asyncio
+async def test_runtime_fails_on_missing_required_tools():
+    """Bug 5: Runtime should fail at startup if required tools are not available."""
+    skill = parse_skill(SKILL_WITH_REQUIRED_TOOLS)
+    config = ProcedaConfig()
+    runtime = Runtime(config=config)
+
+    with pytest.raises(ExecutionError, match="Required tools not available"):
+        await runtime.start(skill)

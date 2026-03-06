@@ -14,6 +14,7 @@ from proceda.events import (
     EventType,
     RunEvent,
 )
+from proceda.exceptions import ExecutionError
 from proceda.human import AutoApproveHumanInterface, HumanInterface
 from proceda.internal.executor import Executor
 from proceda.internal.summary import generate_run_summary
@@ -112,7 +113,7 @@ class Runtime:
         # Set up run directory and event log
         dir_manager = RunDirectoryManager(self._config.logging.run_dir)
         run_dir = dir_manager.create_run_dir(session.id)
-        log_writer = EventLogWriter(run_dir)
+        log_writer = EventLogWriter(run_dir, redact_secrets=self._config.logging.redact_secrets)
         await log_writer.open()
 
         handle = RunHandle(session, skill, event_log_path=run_dir)
@@ -161,6 +162,10 @@ class Runtime:
 
         if self._config.apps:
             await orchestrator.connect_all()
+
+        missing = orchestrator.check_required_tools()
+        if missing:
+            raise ExecutionError(f"Required tools not available: {', '.join(missing)}")
 
         # Set up tool executor
         tool_executor = ToolExecutor(orchestrator, session.id) if self._config.apps else None

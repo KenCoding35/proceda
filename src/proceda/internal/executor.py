@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from proceda.events import EventType, RunEvent
-from proceda.exceptions import ApprovalRejectedError
+from proceda.exceptions import ApprovalRejectedError, ExecutionError
 from proceda.human import HumanInterface
 from proceda.internal.context import ContextManager
 from proceda.internal.tool_executor import ToolExecutor
@@ -96,7 +96,7 @@ class Executor:
                         step.index,
                         step.title,
                         "pre_step",
-                        f"Step {step.index} requires pre-approval before execution.",
+                        f"Step {step.index}: {step.title}\n\n{step.content}",
                     )
                     if decision == ApprovalDecision.REJECT:
                         raise ApprovalRejectedError(f"Pre-approval rejected for step {step.index}")
@@ -172,6 +172,7 @@ class Executor:
                     {"error": str(e), "step_index": session.current_step},
                 )
             )
+            await self._emit_status_change(RunStatus.FAILED)
 
     async def _execute_step(self, step_index: int) -> None:
         """Execute a single step via the LLM loop."""
@@ -250,6 +251,11 @@ class Executor:
                         return
                 else:
                     await self._handle_app_tool(tc)
+
+        raise ExecutionError(
+            f"Step {step_index} exhausted {MAX_TOOL_CALL_ITERATIONS} iterations "
+            "without calling complete_step"
+        )
 
     async def _handle_control_tool(self, tool_call: ToolCall) -> str | None:
         """Handle a control tool call. Returns 'step_complete' if step is done."""

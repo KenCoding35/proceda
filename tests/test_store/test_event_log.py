@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
 from proceda.events import EventType, RunEvent
-from proceda.store.event_log import EventLogReader, EventLogWriter, RunDirectoryManager
+from proceda.store.event_log import (
+    EventLogReader,
+    EventLogWriter,
+    RunDirectoryManager,
+    _redact_dict,
+)
 
 
 class TestRunDirectoryManager:
@@ -92,6 +98,55 @@ class TestEventLogWriter:
         path = writer.write_artifact("report.html", "<h1>Done</h1>", "text/html")
         assert path.exists()
         assert path.read_text() == "<h1>Done</h1>"
+
+
+class TestRedactSecrets:
+    """Bug 2: redact_secrets config should actually redact secret-like fields."""
+
+    def test_redact_dict_scrubs_secret_keys(self) -> None:
+        data = {"api_key": "sk-123", "name": "test", "auth_token": "tok-abc"}
+        result = _redact_dict(data)
+        assert result["api_key"] == "**REDACTED**"
+        assert result["auth_token"] == "**REDACTED**"
+        assert result["name"] == "test"
+
+    def test_redact_dict_handles_nested(self) -> None:
+        data = {"config": {"password": "hunter2", "host": "localhost"}}
+        result = _redact_dict(data)
+        assert result["config"]["password"] == "**REDACTED**"
+        assert result["config"]["host"] == "localhost"
+
+    def test_redact_dict_handles_lists(self) -> None:
+        data = {"items": [{"secret": "s1"}, {"value": "v1"}]}
+        result = _redact_dict(data)
+        assert result["items"][0]["secret"] == "**REDACTED**"
+        assert result["items"][1]["value"] == "v1"
+
+    def test_metadata_redacted_when_enabled(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path, redact_secrets=True)
+        writer.write_metadata({"run_id": "test", "api_key": "sk-secret-123"})
+        meta = json.loads((tmp_path / "metadata.json").read_text())
+        assert meta["api_key"] == "**REDACTED**"
+        assert meta["run_id"] == "test"
+
+    def test_metadata_not_redacted_when_disabled(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path, redact_secrets=False)
+        writer.write_metadata({"run_id": "test", "api_key": "sk-secret-123"})
+        meta = json.loads((tmp_path / "metadata.json").read_text())
+        assert meta["api_key"] == "sk-secret-123"
+
+    @pytest.mark.asyncio
+    async def test_events_redacted_when_enabled(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path, redact_secrets=True)
+        await writer.open()
+        event = RunEvent.create("r1", EventType.TOOL_CALLED, {"api_key": "sk-123", "tool": "x"})
+        await writer.handle(event)
+        await writer.close()
+
+        reader = EventLogReader(tmp_path)
+        events = reader.read_events()
+        assert events[0].payload["api_key"] == "**REDACTED**"
+        assert events[0].payload["tool"] == "x"
 
 
 class TestEventLogReader:

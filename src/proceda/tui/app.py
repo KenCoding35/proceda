@@ -7,7 +7,7 @@ import asyncio
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Footer, Header
+from textual.widgets import Footer, Header, Input
 
 from proceda.config import ProcedaConfig
 from proceda.events import EventType, RunEvent
@@ -215,8 +215,12 @@ class ProcedaApp(App[None]):
         """Show clarification prompt in TUI."""
         status = self.query_one(StatusBarWidget)
         status.update_status("awaiting_input")
+        messages = self.query_one(MessageStreamWidget)
+        messages.add_message("system", f"Clarification: {request.question}")
         loop = asyncio.get_event_loop()
         self._clarification_future = loop.create_future()
+        content = self.query_one("#content", Vertical)
+        content.mount(Input(placeholder="Type your response...", id="clarification-input"))
 
     async def wait_for_clarification(self) -> str:
         if self._clarification_future:
@@ -235,9 +239,20 @@ class ProcedaApp(App[None]):
         if self._approval_future and not self._approval_future.done():
             self._approval_future.set_result(ApprovalDecision.SKIP)
 
-    def action_confirm_clarification(self) -> None:
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle clarification input submission."""
         if self._clarification_future and not self._clarification_future.done():
-            self._clarification_future.set_result("Proceed with default.")
+            self._clarification_future.set_result(event.value)
+        event.input.remove()
+
+    async def action_confirm_clarification(self) -> None:
+        """Submit the clarification input if present, otherwise use default."""
+        try:
+            input_widget = self.query_one("#clarification-input", Input)
+            await input_widget.action_submit()
+        except Exception:
+            if self._clarification_future and not self._clarification_future.done():
+                self._clarification_future.set_result("Proceed with default.")
 
     def action_help(self) -> None:
         messages = self.query_one(MessageStreamWidget)
