@@ -98,8 +98,8 @@ def run(
                 key, value = v.split("=", 1)
                 variables[key] = value
 
-        # Load skill
-        skill = load_skill(path)
+        # Load skill (pass LLM config for auto-structuring unformatted files)
+        skill = load_skill(path, llm_config=cfg.llm)
         console.print(f"[dim]Loaded skill: {skill.name}[/dim]")
 
         # Run
