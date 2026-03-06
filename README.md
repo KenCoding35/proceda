@@ -99,6 +99,33 @@ agent = Agent.from_path("./my-skill", human=MyHuman())
 result = agent.run()
 ```
 
+## Development
+
+### Setup
+
+```bash
+uv sync --extra dev
+make install-hooks
+```
+
+### Pre-commit hooks
+
+Every commit automatically runs:
+- **ruff format** — auto-formats Python files
+- **ruff check** — lints and auto-fixes; aborts commit if fixes were applied so you can review
+- **pytest** — full test suite (~1s)
+
+### Makefile targets
+
+| Target | Description |
+|--------|-------------|
+| `make lint` | Run ruff linter |
+| `make format` | Run ruff formatter |
+| `make test` | Run pytest |
+| `make typecheck` | Run mypy (strict mode) |
+| `make check` | Run all of the above |
+| `make install-hooks` | Install pre-commit hooks |
+
 ## License
 
 MIT
