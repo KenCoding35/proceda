@@ -74,6 +74,9 @@ class Executor:
         )
 
         session.set_status(RunStatus.RUNNING)
+        await self._emit(
+            RunEvent.create(session.id, EventType.RUN_STARTED, {"skill_name": self._skill.name})
+        )
         await self._emit_status_change(RunStatus.RUNNING)
 
         try:
@@ -135,10 +138,23 @@ class Executor:
                 session.advance_step()
 
             session.set_status(RunStatus.COMPLETED)
+            await self._emit(
+                RunEvent.create(
+                    session.id,
+                    EventType.RUN_COMPLETED,
+                    {
+                        "completed_steps": len(session.completed_steps),
+                        "total_steps": self._skill.step_count,
+                    },
+                )
+            )
             await self._emit_status_change(RunStatus.COMPLETED)
 
         except ApprovalRejectedError:
             session.set_status(RunStatus.CANCELLED)
+            await self._emit(
+                RunEvent.create(session.id, EventType.RUN_CANCELLED, {"reason": "approval_rejected"})
+            )
             await self._emit_status_change(RunStatus.CANCELLED)
         except Exception as e:
             logger.exception("Execution failed")

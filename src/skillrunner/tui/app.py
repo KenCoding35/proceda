@@ -102,6 +102,7 @@ class SkillRunnerApp(App[None]):
         Binding("a", "approve", "Approve", show=False),
         Binding("r", "reject", "Reject", show=False),
         Binding("s", "skip", "Skip", show=False),
+        Binding("c", "confirm_clarification", "Confirm", show=False),
         Binding("?", "help", "Help", show=True),
     ]
 
@@ -235,10 +236,15 @@ class SkillRunnerApp(App[None]):
         if self._approval_future and not self._approval_future.done():
             self._approval_future.set_result(ApprovalDecision.SKIP)
 
+    def action_confirm_clarification(self) -> None:
+        if self._clarification_future and not self._clarification_future.done():
+            self._clarification_future.set_result("Proceed with default.")
+
     def action_help(self) -> None:
         messages = self.query_one(MessageStreamWidget)
         messages.add_message(
             "system",
             "Keyboard shortcuts:\n"
-            "  a = Approve  |  r = Reject  |  s = Skip  |  q = Quit  |  ? = Help",
+            "  a = Approve  |  r = Reject  |  s = Skip\n"
+            "  c = Confirm clarification  |  q = Quit  |  ? = Help",
         )

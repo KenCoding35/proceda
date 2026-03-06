@@ -43,7 +43,8 @@ class RunHandle:
         self._events: list[RunEvent] = []
         self._event_queue: asyncio.Queue[RunEvent | None] = asyncio.Queue()
 
-    async def _receive_event(self, event: RunEvent) -> None:
+    async def handle(self, event: RunEvent) -> None:
+        """Receive an event (implements EventSink protocol)."""
         self._events.append(event)
         await self._event_queue.put(event)
 
@@ -120,7 +121,7 @@ class Runtime:
         # Compose event sinks
         composite = CompositeEventSink()
         composite.add(log_writer)
-        composite.add(handle)  # type: ignore
+        composite.add(handle)
         if event_sinks:
             for sink in event_sinks:
                 composite.add(sink)
