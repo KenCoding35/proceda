@@ -1,4 +1,5 @@
-"""Core executor: drives step-by-step skill execution."""
+"""ABOUTME: Core executor: drives step-by-step skill execution.
+ABOUTME: Handles LLM loop, approval gates, tool calls, and guard-rail limits."""
 
 from __future__ import annotations
 
@@ -21,6 +22,8 @@ from proceda.session import (
     ApprovalRequest,
     ClarificationRequest,
     ErrorContext,
+    ErrorRecoveryDecision,
+    ErrorRecoveryRequest,
     RunMessage,
     RunSession,
     RunStatus,
@@ -50,6 +53,8 @@ class Executor:
         emit: EmitFn,
         context_manager: ContextManager | None = None,
         tool_schemas: list[dict[str, Any]] | None = None,
+        max_text_responses_before_prompt: int = 3,
+        max_tool_calls_per_step: int = 20,
     ) -> None:
         self._skill = skill
         self._session = session
@@ -59,6 +64,8 @@ class Executor:
         self._emit = emit
         self._context = context_manager or ContextManager()
         self._app_tool_schemas = tool_schemas or []
+        self._max_text_before_prompt = max_text_responses_before_prompt
+        self._max_tool_calls_per_step = max_tool_calls_per_step
 
     async def execute(self) -> None:
         """Run the full skill from current step to completion."""
@@ -180,10 +187,12 @@ class Executor:
         session = self._session
 
         step_prompt = build_step_prompt(step)
-        session.add_message(RunMessage.create("user", step_prompt))
+        session.add_message(RunMessage.create("user", step_prompt, is_critical=True))
 
         text_only_count = 0
         iteration_count = 0
+        step_tool_call_count = 0
+        hard_cap = self._max_text_before_prompt * 5
 
         while iteration_count < MAX_TOOL_CALL_ITERATIONS:
             iteration_count += 1
@@ -220,11 +229,30 @@ class Executor:
                     )
                 )
 
-            # No tool calls - just text
+            # No tool calls - just text (two-tier handling)
             if not response.tool_calls:
                 text_only_count += 1
-                if text_only_count >= MAX_TEXT_ONLY_ITERATIONS:
-                    # Force step completion after too many text-only responses
+
+                # Hard tier: force-complete the step
+                if text_only_count >= hard_cap:
+                    logger.warning(
+                        "Step %d force-completed after %d text-only responses",
+                        step_index,
+                        text_only_count,
+                    )
+                    session.add_message(
+                        RunMessage.create(
+                            "system",
+                            "Step force-completed after too many text-only responses.",
+                        )
+                    )
+                    return
+
+                # Soft tier: send nudge at each multiple of max_text_before_prompt
+                if (
+                    text_only_count >= self._max_text_before_prompt
+                    and text_only_count % self._max_text_before_prompt == 0
+                ):
                     session.add_message(
                         RunMessage.create(
                             "user",
@@ -232,7 +260,6 @@ class Executor:
                             "is done, or use a tool to make progress.",
                         )
                     )
-                    text_only_count = 0
                 continue
 
             text_only_count = 0
@@ -251,6 +278,52 @@ class Executor:
                         return
                 else:
                     await self._handle_app_tool(tc)
+                    step_tool_call_count += 1
+
+                    # Circuit breaker: too many app tool calls in one step
+                    if step_tool_call_count >= self._max_tool_calls_per_step:
+                        error_ctx = ErrorContext(
+                            error_type="ToolCallLimitExceeded",
+                            message=(
+                                f"Step {step_index} made {step_tool_call_count} tool calls "
+                                f"(limit: {self._max_tool_calls_per_step})"
+                            ),
+                            step_index=step_index,
+                        )
+                        request = ErrorRecoveryRequest(error=error_ctx)
+
+                        await self._emit(
+                            RunEvent.create(
+                                session.id,
+                                EventType.ERROR_RECOVERY_REQUESTED,
+                                {
+                                    "step_index": step_index,
+                                    "error": error_ctx.message,
+                                },
+                            )
+                        )
+
+                        decision = await self._human.request_error_recovery(request)
+
+                        await self._emit(
+                            RunEvent.create(
+                                session.id,
+                                EventType.ERROR_RECOVERY_SELECTED,
+                                {
+                                    "step_index": step_index,
+                                    "decision": decision.value,
+                                },
+                            )
+                        )
+
+                        if decision == ErrorRecoveryDecision.RETRY:
+                            step_tool_call_count = 0
+                        elif decision == ErrorRecoveryDecision.SKIP:
+                            return
+                        else:  # CANCEL
+                            raise ExecutionError(
+                                f"Step {step_index} cancelled after exceeding tool call limit"
+                            )
 
         raise ExecutionError(
             f"Step {step_index} exhausted {MAX_TOOL_CALL_ITERATIONS} iterations "
@@ -306,7 +379,9 @@ class Executor:
             await self._emit_status_change(RunStatus.RUNNING)
 
             # Feed answer back as tool result
-            session.add_message(RunMessage.create("tool", answer, tool_call_id=tool_call.id))
+            session.add_message(
+                RunMessage.create("tool", answer, tool_call_id=tool_call.id, is_critical=True)
+            )
 
         return None
 
