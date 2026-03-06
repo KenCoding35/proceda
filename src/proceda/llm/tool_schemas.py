@@ -35,8 +35,10 @@ def get_control_tool_schemas() -> list[dict[str, Any]]:
             "function": {
                 "name": "request_clarification",
                 "description": (
-                    "Ask the user for clarification when the instructions are ambiguous "
-                    "or missing required information."
+                    "Ask the user a question and wait for their response. Use this "
+                    "whenever a step requires user input, feedback, or a decision. "
+                    "This is the ONLY way to get input from the user — printing text "
+                    "does not pause for a response."
                 ),
                 "parameters": {
                     "type": "object",

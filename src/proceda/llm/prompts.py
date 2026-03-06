@@ -23,6 +23,10 @@ def build_system_prompt(skill: Skill, variables: dict[str, str] | None = None) -
         "- Do not proceed to the next step until you call `complete_step`",
         "- If a step is marked [APPROVAL REQUIRED] or [PRE-APPROVAL REQUIRED], "
         "the system will handle approval automatically",
+        "- If a step asks you to ask the user something, wait for their response, "
+        "or get input from the user, you MUST call `request_clarification` with your "
+        "question. Do NOT just print the question as text — that does not pause for "
+        "user input. Only `request_clarification` actually reaches the user.",
     ]
 
     if variables:
