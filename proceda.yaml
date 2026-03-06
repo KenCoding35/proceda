@@ -8,3 +8,8 @@ apps:
     description: Google Workspace (Calendar, Drive)
     transport: stdio
     command: ["gws", "mcp", "-s", "calendar,drive"]
+
+  - name: time-left
+    description: Time remaining in day, week, month, year
+    transport: stdio
+    command: ["uv", "run", "python", "examples/toy-greeting/time_left_server.py"]
