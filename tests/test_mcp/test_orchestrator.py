@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from skillrunner.config import SecurityConfig
-from skillrunner.mcp.models import MCPTool
-from skillrunner.mcp.orchestrator import MCPOrchestrator
+from proceda.config import SecurityConfig
+from proceda.mcp.models import MCPTool
+from proceda.mcp.orchestrator import MCPOrchestrator
 
 
 class TestMCPOrchestrator:

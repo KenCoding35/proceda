@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from skillrunner.events import (
+from proceda.events import (
     CollectorEventSink,
     CompositeEventSink,
     EventType,

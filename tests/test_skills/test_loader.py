@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from skillrunner.exceptions import SkillLoadError
-from skillrunner.skills.loader import load_skill
+from proceda.exceptions import SkillLoadError
+from proceda.skills.loader import load_skill
 
 
 class TestLoadSkill:

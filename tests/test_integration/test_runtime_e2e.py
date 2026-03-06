@@ -6,12 +6,12 @@ from unittest.mock import patch
 
 import pytest
 
-from skillrunner.config import SkillRunnerConfig
-from skillrunner.events import CollectorEventSink, EventType
-from skillrunner.llm.runtime import LLMResponse
-from skillrunner.runtime import Runtime
-from skillrunner.session import RunStatus, ToolCall
-from skillrunner.skills.parser import parse_skill
+from proceda.config import ProcedaConfig
+from proceda.events import CollectorEventSink, EventType
+from proceda.llm.runtime import LLMResponse
+from proceda.runtime import Runtime
+from proceda.session import RunStatus, ToolCall
+from proceda.skills.parser import parse_skill
 
 GREETING_SKILL = """\
 ---
@@ -45,7 +45,7 @@ def _make_complete_step_response(summary: str) -> LLMResponse:
 async def test_runtime_runs_to_completion():
     """The runtime executes a skill through all steps and returns COMPLETED."""
     skill = parse_skill(GREETING_SKILL)
-    config = SkillRunnerConfig()
+    config = ProcedaConfig()
     collector = CollectorEventSink()
 
     responses = [
@@ -62,7 +62,7 @@ async def test_runtime_runs_to_completion():
 
     runtime = Runtime(config=config)
 
-    with patch("skillrunner.llm.runtime.LLMRuntime.complete", side_effect=mock_complete):
+    with patch("proceda.llm.runtime.LLMRuntime.complete", side_effect=mock_complete):
         result = await runtime.run(skill, event_sinks=[collector])
 
     assert result.status == RunStatus.COMPLETED
@@ -82,7 +82,7 @@ async def test_runtime_runs_to_completion():
 async def test_runtime_emits_events_in_order():
     """Lifecycle events appear in the correct order."""
     skill = parse_skill(GREETING_SKILL)
-    config = SkillRunnerConfig()
+    config = ProcedaConfig()
     collector = CollectorEventSink()
 
     responses = [
@@ -99,7 +99,7 @@ async def test_runtime_emits_events_in_order():
 
     runtime = Runtime(config=config)
 
-    with patch("skillrunner.llm.runtime.LLMRuntime.complete", side_effect=mock_complete):
+    with patch("proceda.llm.runtime.LLMRuntime.complete", side_effect=mock_complete):
         await runtime.run(skill, event_sinks=[collector])
 
     event_types = [e.type for e in collector.events]

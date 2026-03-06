@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skillrunner.mcp.models import MCPApp, MCPArtifact, MCPTool, MCPToolResult
+from proceda.mcp.models import MCPApp, MCPArtifact, MCPTool, MCPToolResult
 
 
 class TestMCPTool:

@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from skillrunner.events import EventType, RunEvent
-from skillrunner.replay import ReplayRenderer
-from skillrunner.store.event_log import EventLogWriter
+from proceda.events import EventType, RunEvent
+from proceda.replay import ReplayRenderer
+from proceda.store.event_log import EventLogWriter
 
 
 class TestReplayRenderer:

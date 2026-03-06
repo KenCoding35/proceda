@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from skillrunner.internal.summary import generate_run_summary
-from skillrunner.session import RunSession, RunStatus
+from proceda.internal.summary import generate_run_summary
+from proceda.session import RunSession, RunStatus
 
 
 class TestGenerateRunSummary:

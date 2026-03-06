@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from skillrunner.skills.loader import load_skill
-from skillrunner.skills.parser import lint_skill
+from proceda.skills.loader import load_skill
+from proceda.skills.parser import lint_skill
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
 

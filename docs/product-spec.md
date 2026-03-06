@@ -1,4 +1,4 @@
-# SkillRunner OSS SDK Product Specification
+# Proceda OSS SDK Product Specification
 
 **Version**: 0.1.0  
 **Status**: Draft  
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-SkillRunner OSS is a terminal-first, Python-native SDK and CLI for turning a Standard Operating Procedure (SOP) into a runnable agent with built-in human oversight.
+Proceda OSS is a terminal-first, Python-native SDK and CLI for turning a Standard Operating Procedure (SOP) into a runnable agent with built-in human oversight.
 
 The open-source product is not a hosted workflow app. It is not a LangChain clone. It is not a graph builder. It is a local-first agent runtime that makes the following workflow natural:
 
@@ -77,7 +77,7 @@ The current mainstream agent tooling landscape has several gaps:
 - **Tool interfaces are fragmented**
 - **Procedures are not the source of truth**
 
-SkillRunner OSS should win by fixing those specific problems rather than competing on the number of abstractions.
+Proceda OSS should win by fixing those specific problems rather than competing on the number of abstractions.
 
 ---
 
@@ -91,7 +91,7 @@ The core open-source primitive is:
 
 ### 2.2 Product Positioning
 
-SkillRunner OSS should be understood as:
+Proceda OSS should be understood as:
 
 - a **modern Python SDK for agent execution**
 - a **CLI/TUI for running and debugging agents locally**
@@ -109,7 +109,7 @@ It should not be positioned as:
 
 The OSS product should stand out on these dimensions:
 
-| Dimension | SkillRunner OSS Position |
+| Dimension | Proceda OSS Position |
 |----------|---------------------------|
 | Primary abstraction | SOP / Skill |
 | Authoring format | Markdown-first |
@@ -135,7 +135,7 @@ Approval and clarification are not plugins. They are runtime states with first-c
 
 ### 3.3 Great Local DX Beats Architectural Purity
 
-The first public win condition is a developer running `skillrunner dev ./my-skill` and immediately understanding what is happening.
+The first public win condition is a developer running `proceda dev ./my-skill` and immediately understanding what is happening.
 
 ### 3.4 One Repo, One Package, One Story
 
@@ -211,7 +211,7 @@ Version 1 is the first public open-source release. It is local-first and termina
 #### In Scope
 
 - Python package installable via `pip`
-- CLI command `skillrunner`
+- CLI command `proceda`
 - Local `SKILL.md` loading from file or directory
 - MCP tools over stdio and HTTP
 - LLM execution via LiteLLM-backed runtime
@@ -314,9 +314,9 @@ TypeScript is a future possibility only if:
 The first successful user journey should feel like this:
 
 ```bash
-pip install skillrunner
+pip install proceda
 export ANTHROPIC_API_KEY=...
-skillrunner run ./examples/expense-processing
+proceda run ./examples/expense-processing
 ```
 
 The user should immediately see:
@@ -332,7 +332,7 @@ The user should immediately see:
 The ideal demo for the README and launch should be:
 
 1. Show a `SKILL.md`
-2. Run `skillrunner dev ./skill`
+2. Run `proceda dev ./skill`
 3. Watch the agent move step by step
 4. See a tool call
 5. Approve a risky action
@@ -478,14 +478,14 @@ This demo is more important than secondary features.
 
 The initial command surface should be intentionally small and polished.
 
-### 12.1 `skillrunner run`
+### 12.1 `proceda run`
 
 Run a skill in standard interactive mode.
 
 ```bash
-skillrunner run ./skills/expense-processing
-skillrunner run ./skills/expense-processing --model anthropic/claude-sonnet-4-20250514
-skillrunner run ./skills/expense-processing --var ticket_id=INC-123
+proceda run ./skills/expense-processing
+proceda run ./skills/expense-processing --model anthropic/claude-sonnet-4-20250514
+proceda run ./skills/expense-processing --var ticket_id=INC-123
 ```
 
 Requirements:
@@ -495,12 +495,12 @@ Requirements:
 - Print final summary
 - Exit non-zero on failure or rejection
 
-### 12.2 `skillrunner dev`
+### 12.2 `proceda dev`
 
 Run a skill in full-screen TUI mode.
 
 ```bash
-skillrunner dev ./skills/expense-processing
+proceda dev ./skills/expense-processing
 ```
 
 Requirements:
@@ -510,12 +510,12 @@ Requirements:
 - Show tool calls/results live
 - Allow approval/clarification inline
 
-### 12.3 `skillrunner lint`
+### 12.3 `proceda lint`
 
 Validate a skill statically.
 
 ```bash
-skillrunner lint ./skills/expense-processing
+proceda lint ./skills/expense-processing
 ```
 
 Requirements:
@@ -525,13 +525,13 @@ Requirements:
 - Validate required tool names against configured MCP tools when possible
 - Surface warnings and errors separately
 
-### 12.4 `skillrunner replay`
+### 12.4 `proceda replay`
 
 Replay a historical run from local event logs.
 
 ```bash
-skillrunner replay .skillrunner/runs/20260305_101522_abcd1234
-skillrunner replay <run-id>
+proceda replay .proceda/runs/20260305_101522_abcd1234
+proceda replay <run-id>
 ```
 
 Requirements:
@@ -539,12 +539,12 @@ Requirements:
 - Render prior run events without re-executing tools or LLM calls
 - Work even if upstream services are unavailable
 
-### 12.5 `skillrunner doctor`
+### 12.5 `proceda doctor`
 
 Validate local environment and configuration.
 
 ```bash
-skillrunner doctor
+proceda doctor
 ```
 
 Requirements:
@@ -559,10 +559,10 @@ Requirements:
 
 These should not ship in v1 unless the implementation is nearly free:
 
-- `skillrunner resume`
-- `skillrunner fetch`
-- `skillrunner auth`
-- `skillrunner serve`
+- `proceda resume`
+- `proceda fetch`
+- `proceda auth`
+- `proceda serve`
 
 ---
 
@@ -662,7 +662,7 @@ The OSS project intentionally stays markdown-first because:
 The default config filename should be:
 
 ```text
-skillrunner.yaml
+proceda.yaml
 ```
 
 The CLI may also support `--config <path>`.
@@ -743,7 +743,7 @@ Version 2 should extend the product without changing the core developer mental m
 Allow:
 
 ```bash
-skillrunner run https://raw.githubusercontent.com/org/repo/main/skill/SKILL.md
+proceda run https://raw.githubusercontent.com/org/repo/main/skill/SKILL.md
 ```
 
 Requirements:
@@ -759,7 +759,7 @@ Requirements:
 Allow:
 
 ```bash
-skillrunner resume <run-id>
+proceda resume <run-id>
 ```
 
 Requirements:
@@ -843,13 +843,13 @@ Mitigation:
 
 These questions should be resolved before implementation freeze, but they should not block repo bootstrapping:
 
-1. Should the public package and CLI be named `skillrunner`, or should the OSS project adopt a new standalone brand?
-2. Should `skillrunner init` exist in v1, or can examples and docs cover initial skill authoring?
+1. Should the public package and CLI be named `proceda`, or should the OSS project adopt a new standalone brand?
+2. Should `proceda init` exist in v1, or can examples and docs cover initial skill authoring?
 3. Should replay be text-only in v1, or should it reuse the full TUI?
 
 Current recommendation:
 
-- keep package name `skillrunner` for the first extraction
+- keep package name `proceda` for the first extraction
 - defer `init`
 - implement replay in the TUI if feasible, otherwise plain rich output is acceptable for v1
 
@@ -857,7 +857,7 @@ Current recommendation:
 
 ## 22. Final Product Statement
 
-The open-source SkillRunner SDK should be:
+The open-source Proceda SDK should be:
 
 - obviously useful on day one
 - beautiful in the terminal

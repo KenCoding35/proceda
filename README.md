@@ -1,23 +1,23 @@
-# SkillRunner
+# Proceda
 
 Turn SOPs into runnable agents with built-in human oversight.
 
 ## Install
 
 ```bash
-pip install skillrunner
+pip install proceda
 ```
 
 ## Quickstart
 
 ```bash
 export ANTHROPIC_API_KEY=...
-skillrunner run ./examples/expense-processing
+proceda run ./examples/expense-processing
 ```
 
-## What is SkillRunner?
+## What is Proceda?
 
-SkillRunner is a terminal-first, Python-native SDK for turning Standard Operating Procedures (SOPs) into runnable agents. Write a `SKILL.md`, attach tools via MCP, and run it from the terminal with human approval checkpoints built in.
+Proceda is a terminal-first, Python-native SDK for turning Standard Operating Procedures (SOPs) into runnable agents. Write a `SKILL.md`, attach tools via MCP, and run it from the terminal with human approval checkpoints built in.
 
 ## Usage
 
@@ -47,25 +47,25 @@ Submit the validated data.
 
 ```bash
 # Interactive terminal mode
-skillrunner run ./my-skill
+proceda run ./my-skill
 
 # Full-screen TUI dev mode
-skillrunner dev ./my-skill
+proceda dev ./my-skill
 
 # Validate a skill
-skillrunner lint ./my-skill
+proceda lint ./my-skill
 
 # Replay a previous run
-skillrunner replay .skillrunner/runs/<run-id>
+proceda replay .proceda/runs/<run-id>
 
 # Check your environment
-skillrunner doctor
+proceda doctor
 ```
 
 ### Use as a Python SDK
 
 ```python
-from skillrunner import Agent
+from proceda import Agent
 
 agent = Agent.from_path("./my-skill")
 result = agent.run()
@@ -75,7 +75,7 @@ print(result.status)
 ### Event-driven usage
 
 ```python
-from skillrunner import Agent
+from proceda import Agent
 
 agent = Agent.from_path("./my-skill")
 
@@ -86,7 +86,7 @@ async for event in agent.run_stream():
 ### Custom human interface
 
 ```python
-from skillrunner import Agent, HumanInterface
+from proceda import Agent, HumanInterface
 
 class MyHuman(HumanInterface):
     async def request_approval(self, request):

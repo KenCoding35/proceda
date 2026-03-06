@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from skillrunner.llm.prompts import build_step_prompt, build_system_prompt
-from skillrunner.skill import SkillStep, StepMarker
+from proceda.llm.prompts import build_step_prompt, build_system_prompt
+from proceda.skill import SkillStep, StepMarker
 
 
 class TestBuildSystemPrompt:

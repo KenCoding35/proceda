@@ -6,7 +6,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from skillrunner.cli.main import app
+from proceda.cli.main import app
 from tests.conftest import MALFORMED_SKILL_NO_FRONTMATTER, SAMPLE_SKILL_CONTENT
 
 runner = CliRunner()

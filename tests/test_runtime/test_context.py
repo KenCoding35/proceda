@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from skillrunner.internal.context import ContextManager
-from skillrunner.session import RunMessage
+from proceda.internal.context import ContextManager
+from proceda.session import RunMessage
 
 
 class TestContextManager:

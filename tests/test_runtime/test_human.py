@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from skillrunner.human import AutoApproveHumanInterface, ScriptedHumanInterface
-from skillrunner.session import (
+from proceda.human import AutoApproveHumanInterface, ScriptedHumanInterface
+from proceda.session import (
     ApprovalDecision,
     ApprovalRequest,
     ClarificationRequest,

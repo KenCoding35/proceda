@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from skillrunner.exceptions import SkillParseError
-from skillrunner.skills.parser import lint_skill, parse_skill
+from proceda.exceptions import SkillParseError
+from proceda.skills.parser import lint_skill, parse_skill
 from tests.conftest import (
     MALFORMED_SKILL_DUPLICATE_STEPS,
     MALFORMED_SKILL_NO_FRONTMATTER,

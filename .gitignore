@@ -11,7 +11,7 @@ build/
 venv/
 env/
 .env
-.skillrunner/
+.proceda/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/

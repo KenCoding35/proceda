@@ -1,10 +1,10 @@
-# SkillRunner OSS SDK Technical Design
+# Proceda OSS SDK Technical Design
 
 **Version**: 0.1.0  
 **Status**: Draft  
 **Last Updated**: 2026-03-05  
 **Audience**: Engineering  
-**Primary Goal**: Provide an implementation-grade design for extracting the SkillRunner runtime into a standalone Python SDK + CLI/TUI repo
+**Primary Goal**: Provide an implementation-grade design for extracting the Proceda runtime into a standalone Python SDK + CLI/TUI repo
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## 1. Overview
 
-This document describes how to extract the existing SkillRunner execution kernel from the current full-stack repository and turn it into a standalone open-source SDK.
+This document describes how to extract the existing Proceda execution kernel from the current full-stack repository and turn it into a standalone open-source SDK.
 
 The target product is:
 
@@ -97,7 +97,7 @@ This section records the major design decisions and why they were chosen.
 
 ### 3.2 One Package, Not Many
 
-**Decision**: Publish one package, `skillrunner`.
+**Decision**: Publish one package, `proceda`.
 
 **Rationale**:
 
@@ -153,13 +153,13 @@ This section records the major design decisions and why they were chosen.
 The new repository should look like this:
 
 ```text
-skillrunner/
+proceda/
   pyproject.toml
   README.md
   LICENSE
   .gitignore
   src/
-    skillrunner/
+    proceda/
       __init__.py
       agent.py
       skill.py
@@ -327,7 +327,7 @@ Responsibilities:
 
 This section defines the target role of each major module.
 
-### 7.1 `skillrunner.agent`
+### 7.1 `proceda.agent`
 
 Public high-level entry points.
 
@@ -341,7 +341,7 @@ Responsibilities:
 - create configured agent objects
 - provide ergonomic top-level methods
 
-### 7.2 `skillrunner.skill`
+### 7.2 `proceda.skill`
 
 Public skill-facing data models.
 
@@ -351,7 +351,7 @@ Expected contents:
 - `SkillStep`
 - `StepMarker`
 
-### 7.3 `skillrunner.session`
+### 7.3 `proceda.session`
 
 Public session-facing data models.
 
@@ -364,7 +364,7 @@ Expected contents:
 - `ClarificationRequest`
 - `ToolCall`
 
-### 7.4 `skillrunner.events`
+### 7.4 `proceda.events`
 
 Public event model.
 
@@ -374,7 +374,7 @@ Expected contents:
 - event payload models
 - event serialization helpers
 
-### 7.5 `skillrunner.runtime`
+### 7.5 `proceda.runtime`
 
 Public orchestration API for starting and controlling runs.
 
@@ -383,7 +383,7 @@ Expected contents:
 - `Runtime`
 - `RunHandle`
 
-### 7.6 `skillrunner.human`
+### 7.6 `proceda.human`
 
 Human interface contracts.
 
@@ -393,7 +393,7 @@ Expected contents:
 - `TerminalHumanInterface`
 - `AutoApproveHumanInterface` for tests
 
-### 7.7 `skillrunner.llm`
+### 7.7 `proceda.llm`
 
 LLM wrapper layer.
 
@@ -403,7 +403,7 @@ Expected contents:
 - control tool schema helpers
 - provider-specific normalization
 
-### 7.8 `skillrunner.mcp`
+### 7.8 `proceda.mcp`
 
 MCP communication layer.
 
@@ -413,7 +413,7 @@ Expected contents:
 - orchestrator
 - MCP data models
 
-### 7.9 `skillrunner.skills`
+### 7.9 `proceda.skills`
 
 Skill discovery and parsing.
 
@@ -423,7 +423,7 @@ Expected contents:
 - local loader
 - registry or path resolver
 
-### 7.10 `skillrunner.store`
+### 7.10 `proceda.store`
 
 Local logging and later persistence.
 
@@ -433,18 +433,18 @@ Expected contents:
 - run directory manager
 - v2 snapshot support
 
-### 7.11 `skillrunner.tui`
+### 7.11 `proceda.tui`
 
 Textual-based terminal UI.
 
 Expected contents:
 
-- `SkillRunnerApp`
+- `ProcedaApp`
 - live widgets
 - approval/clarification prompts
 - event-driven screens
 
-### 7.12 `skillrunner.internal`
+### 7.12 `proceda.internal`
 
 Internal runtime pieces that should not be marketed as public API.
 
@@ -689,7 +689,7 @@ The public Python API must be deliberately small.
 ### 10.1 High-Level API
 
 ```python
-from skillrunner import Agent
+from proceda import Agent
 
 agent = Agent.from_path("./skills/expense-processing")
 result = agent.run()
@@ -699,7 +699,7 @@ print(result.status)
 ### 10.2 Async/Event API
 
 ```python
-from skillrunner import Agent
+from proceda import Agent
 
 agent = Agent.from_path("./skills/expense-processing")
 session = agent.create_session()
@@ -711,7 +711,7 @@ async for event in session.run_stream():
 ### 10.3 Custom Human Interface Example
 
 ```python
-from skillrunner import Agent, HumanInterface
+from proceda import Agent, HumanInterface
 
 class MyHuman(HumanInterface):
     async def request_approval(self, request):
@@ -726,7 +726,7 @@ result = agent.run()
 
 ### 10.4 Public API Stability Rule
 
-Only export a minimal curated set from `skillrunner.__init__`.
+Only export a minimal curated set from `proceda.__init__`.
 
 Do not export internal executor implementation details.
 
@@ -747,11 +747,11 @@ Rationale:
 ### 11.2 Command Structure
 
 ```text
-skillrunner run <path>
-skillrunner dev <path>
-skillrunner lint <path>
-skillrunner replay <run-id-or-path>
-skillrunner doctor
+proceda run <path>
+proceda dev <path>
+proceda lint <path>
+proceda replay <run-id-or-path>
+proceda doctor
 ```
 
 ### 11.3 Command Behavior
@@ -863,7 +863,7 @@ Do not support remote URLs in v1.
 
 ### 13.2 Parser Rules
 
-Reuse the existing parser logic where possible, but move it under `skillrunner.skills.parser`.
+Reuse the existing parser logic where possible, but move it under `proceda.skills.parser`.
 
 The parser must:
 
@@ -899,7 +899,7 @@ The current LiteLLM-based wrapper should be adapted, not rewritten from scratch.
 
 Source reference:
 
-- `backend/src/skillrunner/engine/llm_runtime.py`
+- `backend/src/proceda/engine/llm_runtime.py`
 
 ### 14.2 Required Features
 
@@ -945,8 +945,8 @@ The runtime should not assume the TUI always displays them.
 
 Adapt the current MCP client and app orchestrator:
 
-- `backend/src/skillrunner/engine/mcp_client.py`
-- `backend/src/skillrunner/engine/app_orchestrator.py`
+- `backend/src/proceda/engine/mcp_client.py`
+- `backend/src/proceda/engine/app_orchestrator.py`
 
 ### 15.2 v1 Requirements
 
@@ -1040,7 +1040,7 @@ For v1, rejection should end the run with a clear status and summary.
 Every run should create a run directory:
 
 ```text
-.skillrunner/runs/<timestamp>_<short-id>/
+.proceda/runs/<timestamp>_<short-id>/
 ```
 
 Contents:
@@ -1101,7 +1101,7 @@ Checkpoint timing:
 Default:
 
 ```text
-skillrunner.yaml
+proceda.yaml
 ```
 
 ### 18.2 Config Model
@@ -1119,8 +1119,8 @@ Drop hosted-only config sections from the new repo.
 ### 18.3 Config Search Order
 
 1. `--config` path if provided
-2. `./skillrunner.yaml`
-3. `~/.config/skillrunner/config.yaml`
+2. `./proceda.yaml`
+3. `~/.config/proceda/config.yaml`
 
 ### 18.4 Environment Expansion
 
@@ -1136,26 +1136,26 @@ This section maps the current implementation to the target repo.
 
 These files are strong extraction candidates:
 
-- `backend/src/skillrunner/engine/skill_parser.py`
-- `backend/src/skillrunner/engine/executor.py`
-- `backend/src/skillrunner/engine/llm_runtime.py`
-- `backend/src/skillrunner/engine/mcp_client.py`
-- `backend/src/skillrunner/engine/app_orchestrator.py`
-- `backend/src/skillrunner/engine/context_manager.py`
-- `backend/src/skillrunner/engine/summary.py`
-- `backend/src/skillrunner/models/skill.py`
-- `backend/src/skillrunner/models/session.py`
-- `backend/src/skillrunner/models/mcp.py`
-- `backend/src/skillrunner/models/config.py`
+- `backend/src/proceda/engine/skill_parser.py`
+- `backend/src/proceda/engine/executor.py`
+- `backend/src/proceda/engine/llm_runtime.py`
+- `backend/src/proceda/engine/mcp_client.py`
+- `backend/src/proceda/engine/app_orchestrator.py`
+- `backend/src/proceda/engine/context_manager.py`
+- `backend/src/proceda/engine/summary.py`
+- `backend/src/proceda/models/skill.py`
+- `backend/src/proceda/models/session.py`
+- `backend/src/proceda/models/mcp.py`
+- `backend/src/proceda/models/config.py`
 
 ### 19.2 Remove Entirely
 
 These should not move into the OSS SDK:
 
-- `backend/src/skillrunner/api/routes.py`
-- `backend/src/skillrunner/api/websocket.py`
-- `backend/src/skillrunner/api/auth.py`
-- `backend/src/skillrunner/api/scalekit_auth.py`
+- `backend/src/proceda/api/routes.py`
+- `backend/src/proceda/api/websocket.py`
+- `backend/src/proceda/api/auth.py`
+- `backend/src/proceda/api/scalekit_auth.py`
 - `frontend/`
 - deployment and cloud-specific scripts
 
@@ -1189,7 +1189,7 @@ Deliverables:
 Exit criteria:
 
 - `uv sync` or equivalent works
-- `python -m skillrunner --help` works
+- `python -m proceda --help` works
 
 ### Phase 1: Data Models and Parser
 
@@ -1204,7 +1204,7 @@ Deliverables:
 Exit criteria:
 
 - local `SKILL.md` parses
-- `skillrunner lint` works on sample files
+- `proceda lint` works on sample files
 
 ### Phase 2: Runtime Core
 
@@ -1306,8 +1306,8 @@ This section is deliberately granular. A junior engineer should be able to execu
 Create:
 
 - `pyproject.toml`
-- `src/skillrunner/__init__.py`
-- `src/skillrunner/cli/main.py`
+- `src/proceda/__init__.py`
+- `src/proceda/cli/main.py`
 - `tests/`
 - `examples/`
 - `docs/`
@@ -1334,7 +1334,7 @@ Acceptance criteria:
 
 #### Task 3: Implement skill models
 
-Create `skillrunner/skill.py`.
+Create `proceda/skill.py`.
 
 Implement:
 
@@ -1349,7 +1349,7 @@ Acceptance criteria:
 
 #### Task 4: Implement session models
 
-Create `skillrunner/session.py`.
+Create `proceda/session.py`.
 
 Implement:
 
@@ -1368,7 +1368,7 @@ Acceptance criteria:
 
 #### Task 5: Implement event models
 
-Create `skillrunner/events.py`.
+Create `proceda/events.py`.
 
 Implement:
 
@@ -1384,7 +1384,7 @@ Acceptance criteria:
 
 #### Task 6: Port parser logic
 
-Create `skillrunner/skills/parser.py`.
+Create `proceda/skills/parser.py`.
 
 Port from existing parser and adapt imports.
 
@@ -1395,7 +1395,7 @@ Acceptance criteria:
 
 #### Task 7: Implement local loader
 
-Create `skillrunner/skills/loader.py`.
+Create `proceda/skills/loader.py`.
 
 Behavior:
 
@@ -1418,7 +1418,7 @@ Behavior:
 
 Acceptance criteria:
 
-- `skillrunner lint` can print machine-consumable results later if needed
+- `proceda lint` can print machine-consumable results later if needed
 
 ### 21.4 Runtime Core
 
@@ -1436,7 +1436,7 @@ Acceptance criteria:
 
 #### Task 10: Implement runtime context manager
 
-Port current context management into `skillrunner/internal/context.py`.
+Port current context management into `proceda/internal/context.py`.
 
 Acceptance criteria:
 
@@ -1444,7 +1444,7 @@ Acceptance criteria:
 
 #### Task 11: Port executor
 
-Create `skillrunner/internal/executor.py`.
+Create `proceda/internal/executor.py`.
 
 Adapt current executor to:
 
@@ -1459,7 +1459,7 @@ Acceptance criteria:
 
 #### Task 12: Define run control loop
 
-Create `skillrunner/runtime.py`.
+Create `proceda/runtime.py`.
 
 Implement:
 
@@ -1481,7 +1481,7 @@ Acceptance criteria:
 
 #### Task 13: Port LiteLLM wrapper
 
-Create `skillrunner/llm/runtime.py`.
+Create `proceda/llm/runtime.py`.
 
 Port:
 
@@ -1496,7 +1496,7 @@ Acceptance criteria:
 
 #### Task 14: Port control tool definitions
 
-Create `skillrunner/llm/tool_schemas.py`.
+Create `proceda/llm/tool_schemas.py`.
 
 Implement stable schemas for:
 
@@ -1511,7 +1511,7 @@ Acceptance criteria:
 
 #### Task 15: Port MCP models
 
-Create `skillrunner/mcp/models.py`.
+Create `proceda/mcp/models.py`.
 
 Acceptance criteria:
 
@@ -1519,7 +1519,7 @@ Acceptance criteria:
 
 #### Task 16: Port MCP client transports
 
-Create `skillrunner/mcp/client.py`.
+Create `proceda/mcp/client.py`.
 
 Port:
 
@@ -1532,7 +1532,7 @@ Acceptance criteria:
 
 #### Task 17: Port orchestrator
 
-Create `skillrunner/mcp/orchestrator.py`.
+Create `proceda/mcp/orchestrator.py`.
 
 Adapt to runtime event sinks rather than web logging.
 
@@ -1545,7 +1545,7 @@ Acceptance criteria:
 
 #### Task 18: Implement tool executor adapter
 
-Create `skillrunner/internal/tool_executor.py`.
+Create `proceda/internal/tool_executor.py`.
 
 Behavior:
 
@@ -1560,7 +1560,7 @@ Acceptance criteria:
 
 #### Task 19: Define `HumanInterface`
 
-Create `skillrunner/human.py`.
+Create `proceda/human.py`.
 
 Acceptance criteria:
 
@@ -1593,11 +1593,11 @@ Acceptance criteria:
 
 #### Task 22: Implement CLI root
 
-Create `skillrunner/cli/main.py`.
+Create `proceda/cli/main.py`.
 
 Acceptance criteria:
 
-- `skillrunner --help` shows all commands
+- `proceda --help` shows all commands
 
 #### Task 23: Implement `lint`
 
@@ -1648,7 +1648,7 @@ Acceptance criteria:
 
 #### Task 27: Implement run directory manager
 
-Create `skillrunner/store/event_log.py`.
+Create `proceda/store/event_log.py`.
 
 Behavior:
 
@@ -1675,7 +1675,7 @@ Acceptance criteria:
 
 #### Task 29: Create Textual app shell
 
-Create `skillrunner/tui/app.py`.
+Create `proceda/tui/app.py`.
 
 Acceptance criteria:
 
@@ -1722,13 +1722,13 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- `skillrunner dev <path>` launches the TUI and runs the skill
+- `proceda dev <path>` launches the TUI and runs the skill
 
 ### 21.11 Python Public API
 
 #### Task 37: Implement `Agent`
 
-Create `skillrunner/agent.py`.
+Create `proceda/agent.py`.
 
 Behavior:
 

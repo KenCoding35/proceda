@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skillrunner.session import (
+from proceda.session import (
     ApprovalRequest,
     ClarificationRequest,
     RunMessage,

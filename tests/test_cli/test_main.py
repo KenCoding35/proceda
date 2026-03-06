@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typer.testing import CliRunner
 
-from skillrunner.cli.main import app
+from proceda.cli.main import app
 
 runner = CliRunner()
 
@@ -13,7 +13,7 @@ class TestCLIMain:
     def test_help(self) -> None:
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "skillrunner" in result.output.lower() or "SkillRunner" in result.output
+        assert "proceda" in result.output.lower() or "Proceda" in result.output
 
     def test_run_help(self) -> None:
         result = runner.invoke(app, ["run", "--help"])

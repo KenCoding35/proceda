@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skillrunner.llm.tool_schemas import (
+from proceda.llm.tool_schemas import (
     CONTROL_TOOLS,
     get_control_tool_schemas,
     is_control_tool,

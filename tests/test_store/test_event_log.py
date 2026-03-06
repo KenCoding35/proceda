@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from skillrunner.events import EventType, RunEvent
-from skillrunner.store.event_log import EventLogReader, EventLogWriter, RunDirectoryManager
+from proceda.events import EventType, RunEvent
+from proceda.store.event_log import EventLogReader, EventLogWriter, RunDirectoryManager
 
 
 class TestRunDirectoryManager:
