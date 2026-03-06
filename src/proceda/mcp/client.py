@@ -61,6 +61,7 @@ class StdioMCPClient(MCPClient):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=env,
+            limit=10 * 1024 * 1024,  # 10 MB — MCP responses can be large
         )
         self.app.connected = True
 
