@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -12,6 +14,7 @@ from proceda.config import ProcedaConfig
 from proceda.events import EventType, RunEvent
 from proceda.human import TerminalHumanInterface
 from proceda.runtime import Runtime
+from proceda.session import RunMessage
 from proceda.skills.loader import load_skill
 
 console = Console()
@@ -75,11 +78,34 @@ class TerminalEventPrinter:
             self._console.print(f"    [dim]{p.get('summary', '')}[/dim]")
 
 
+def _serialize_message(msg: RunMessage) -> dict:
+    """Serialize a RunMessage to a JSON-compatible dict."""
+    d: dict = {
+        "role": msg.role,
+        "content": msg.content,
+        "timestamp": msg.timestamp.isoformat(),
+    }
+    if msg.tool_call_id:
+        d["tool_call_id"] = msg.tool_call_id
+    if msg.app_name:
+        d["app_name"] = msg.app_name
+    if msg.tool_calls:
+        d["tool_calls"] = [
+            {"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in msg.tool_calls
+        ]
+    if msg.is_critical:
+        d["is_critical"] = True
+    return d
+
+
 def run(
     path: str = typer.Argument(..., help="Path to a SKILL.md file or directory"),
     model: str | None = typer.Option(None, "--model", "-m", help="LLM model to use"),
     config: str | None = typer.Option(None, "--config", "-c", help="Config file path"),
     var: list[str] | None = typer.Option(None, "--var", "-v", help="Variables as key=value"),
+    transcript: str | None = typer.Option(
+        None, "--transcript", "-t", help="Save full session transcript to this file (JSONL)"
+    ),
 ) -> None:
     """Run a skill interactively in the terminal."""
     try:
@@ -108,6 +134,15 @@ def run(
         printer = TerminalEventPrinter(console)
 
         result = asyncio.run(runtime.run(skill, variables=variables, event_sinks=[printer]))
+
+        # Save transcript if requested
+        if transcript:
+            transcript_path = Path(transcript)
+            transcript_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(transcript_path, "w") as f:
+                for msg in runtime.last_session.messages:
+                    f.write(json.dumps(_serialize_message(msg), default=str) + "\n")
+            console.print(f"\n[dim]Transcript saved: {transcript_path}[/dim]")
 
         # Print summary
         console.print()

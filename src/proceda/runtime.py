@@ -85,6 +85,14 @@ class Runtime:
         self._config = config or ProcedaConfig()
         self._human = human or AutoApproveHumanInterface()
         self._orchestrator: MCPOrchestrator | None = None
+        self._last_handle: RunHandle | None = None
+
+    @property
+    def last_session(self) -> RunSession:
+        """The session from the most recent run. Raises if no run has been executed."""
+        if self._last_handle is None:
+            raise RuntimeError("No run has been executed yet")
+        return self._last_handle.session
 
     async def run(
         self,
@@ -94,6 +102,7 @@ class Runtime:
     ) -> RunResult:
         """Execute a skill to completion and return the result."""
         handle = await self.start(skill, variables=variables, event_sinks=event_sinks)
+        self._last_handle = handle
 
         # Wait for completion (events are processed internally)
         while not handle.session.status.is_terminal:
