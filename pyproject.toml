@@ -7,14 +7,14 @@ name = "proceda"
 version = "0.1.0"
 description = "A terminal-first, Python-native SDK for turning SOPs into runnable agents with built-in human oversight"
 readme = "README.md"
-license = "MIT"
+license = "Apache-2.0"
 requires-python = ">=3.11"
-authors = [{ name = "Proceda Contributors" }]
+authors = [{ name = "Vivek Haldar" }, { name = "Enchiridion Labs" }]
 keywords = ["agent", "sop", "mcp", "cli", "automation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -31,6 +31,12 @@ dependencies = [
     "httpx>=0.25.0",
     "tiktoken>=0.5.0",
 ]
+
+[project.urls]
+Homepage = "https://enchiridionlabs.online/"
+Repository = "https://github.com/vivekhaldar/proceda"
+Documentation = "https://github.com/vivekhaldar/proceda#readme"
+"Bug Tracker" = "https://github.com/vivekhaldar/proceda/issues"
 
 [project.optional-dependencies]
 dev = [

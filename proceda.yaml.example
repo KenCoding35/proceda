@@ -1,0 +1,32 @@
+# Proceda configuration
+# Place this file at ./proceda.yaml or ~/.config/proceda/proceda.yaml
+# Supports ${VAR} and ${VAR:-default} environment variable expansion.
+
+llm:
+  model: anthropic/claude-sonnet-4-20250514  # Any LiteLLM-supported model
+  # api_key_env: ANTHROPIC_API_KEY           # Environment variable for API key (default)
+  temperature: 0.7
+  max_tokens: 4096
+  # max_retries: 3
+
+apps:
+  # MCP tool servers. Each app exposes tools to the agent.
+  - name: my-tools
+    description: Example MCP tool server
+    transport: stdio                          # "stdio" or "http"
+    command: ["path/to/mcp-server"]           # For stdio transport
+    # url: http://localhost:8080              # For http transport
+    # env:                                    # Environment variables passed to the server
+    #   API_KEY: ${MY_API_KEY}
+
+# dev:
+#   show_reasoning: true
+#   log_mcp: true
+
+# security:
+#   tool_denylist:
+#     - dangerous_tool
+
+# logging:
+#   run_dir: .proceda/runs
+#   redact_secrets: true
