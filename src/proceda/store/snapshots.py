@@ -1,4 +1,5 @@
-"""Snapshot support (v2 placeholder)."""
+"""ABOUTME: Placeholder for session snapshot persistence.
+ABOUTME: Will support saving and restoring run session state for resumption."""
 
 from __future__ import annotations
 

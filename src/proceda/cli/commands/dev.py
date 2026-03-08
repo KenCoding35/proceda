@@ -1,4 +1,6 @@
-"""CLI `dev` command: run a skill in full-screen TUI mode."""
+"""ABOUTME: CLI `dev` command that launches a skill in full-screen TUI mode.
+ABOUTME: Loads config and skill, then starts the Textual-based ProcedaApp.
+"""
 
 from __future__ import annotations
 

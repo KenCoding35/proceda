@@ -1,11 +1,5 @@
-"""Proceda: Turn SOPs into runnable agents with human oversight.
-
-Usage:
-    from proceda import Agent
-
-    agent = Agent.from_path("./skills/my-skill")
-    result = agent.run()
-    print(result.status)
+"""ABOUTME: Public API surface for the Proceda SDK.
+ABOUTME: Re-exports core types: Agent, Skill, RunEvent, HumanInterface, RunSession, etc.
 """
 
 from proceda.agent import Agent

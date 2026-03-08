@@ -1,4 +1,6 @@
-"""CLI `replay` command: replay a previous run from event logs."""
+"""ABOUTME: CLI `replay` command that replays a previous run from saved event logs.
+ABOUTME: Resolves a run by ID or path and renders it via ReplayRenderer.
+"""
 
 from __future__ import annotations
 

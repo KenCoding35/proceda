@@ -1,4 +1,5 @@
-"""Skill registry: manages paths for skill discovery."""
+"""ABOUTME: Discovers and caches skills from configured search paths.
+ABOUTME: Recursively scans directories for SKILL.md files and provides lookup by name."""
 
 from __future__ import annotations
 

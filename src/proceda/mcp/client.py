@@ -1,4 +1,5 @@
-"""MCP client transports: stdio and HTTP."""
+"""ABOUTME: MCP client transports for communicating with tool servers.
+ABOUTME: Provides stdio (subprocess) and HTTP transport implementations of the MCP protocol."""
 
 from __future__ import annotations
 

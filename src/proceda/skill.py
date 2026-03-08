@@ -1,4 +1,6 @@
-"""Skill data models: the parsed representation of a SKILL.md file."""
+"""ABOUTME: Data models for parsed SKILL.md files.
+ABOUTME: Defines Skill, SkillStep, and StepMarker (approval, pre-approval, optional).
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""Prompt construction for LLM calls."""
+"""ABOUTME: Builds system and step prompts for LLM calls during skill execution.
+ABOUTME: Assembles skill metadata, step instructions, variables, and tool info into prompt text."""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""SKILL.md parser: converts markdown + YAML frontmatter into Skill models."""
+"""ABOUTME: Parses SKILL.md files (YAML frontmatter + markdown step headings) into Skill models.
+ABOUTME: Also provides lint_skill() for validating skill files and reporting warnings/errors."""
 
 from __future__ import annotations
 

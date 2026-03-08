@@ -1,1 +1,1 @@
-"""Textual-based terminal UI for dev mode."""
+"""ABOUTME: Textual-based terminal UI for interactive skill execution in dev mode."""

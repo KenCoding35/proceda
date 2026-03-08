@@ -1,4 +1,6 @@
-"""CLI `run` command: execute a skill interactively in the terminal."""
+"""ABOUTME: CLI `run` command that executes a skill interactively in the terminal.
+ABOUTME: Handles config/variable parsing, real-time event printing, and optional transcript export.
+"""
 
 from __future__ import annotations
 

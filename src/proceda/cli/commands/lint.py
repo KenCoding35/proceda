@@ -1,4 +1,6 @@
-"""CLI `lint` command: validate a skill file."""
+"""ABOUTME: CLI `lint` command that validates a SKILL.md file.
+ABOUTME: Reports errors and warnings from the skill parser's lint_skill function.
+"""
 
 from __future__ import annotations
 

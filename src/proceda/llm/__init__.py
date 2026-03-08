@@ -1,4 +1,4 @@
-"""LLM wrapper layer."""
+"""ABOUTME: LLM integration layer providing prompt construction, tool schemas, and model calls."""
 
 from proceda.llm.prompts import build_step_prompt, build_system_prompt
 from proceda.llm.runtime import LLMRuntime

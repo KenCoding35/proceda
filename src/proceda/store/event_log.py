@@ -1,4 +1,5 @@
-"""Event log: append-only JSONL event storage and replay reading."""
+"""ABOUTME: Append-only JSONL event storage for skill runs with secret redaction.
+ABOUTME: Manages run directories, writes events/metadata/artifacts, and reads logs for replay."""
 
 from __future__ import annotations
 

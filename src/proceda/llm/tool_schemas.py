@@ -1,4 +1,5 @@
-"""Control tool schemas: runtime-native tools injected into every LLM call."""
+"""ABOUTME: Defines control tool schemas injected into LLM calls.
+ABOUTME: Lets the LLM signal step completion and request user input."""
 
 from __future__ import annotations
 

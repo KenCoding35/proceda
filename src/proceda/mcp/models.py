@@ -1,4 +1,5 @@
-"""MCP data models."""
+"""ABOUTME: Data models for MCP tools, tool results, artifacts, and app configurations.
+ABOUTME: Defines the core types used throughout the MCP integration layer."""
 
 from __future__ import annotations
 

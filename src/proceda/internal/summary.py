@@ -1,4 +1,5 @@
-"""Summary generation for completed runs."""
+"""ABOUTME: Generates human-readable summaries of completed skill runs.
+ABOUTME: Formats step outcomes, duration, and approval counts into a text report."""
 
 from __future__ import annotations
 

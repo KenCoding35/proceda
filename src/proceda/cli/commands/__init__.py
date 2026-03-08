@@ -1,1 +1,1 @@
-"""CLI command implementations."""
+"""ABOUTME: CLI subcommand implementations for the `proceda` command."""

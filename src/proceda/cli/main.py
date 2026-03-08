@@ -1,4 +1,6 @@
-"""CLI root: the `proceda` command."""
+"""ABOUTME: Root CLI application built with Typer.
+ABOUTME: Registers subcommands (run, dev, lint, replay, doctor).
+"""
 
 from __future__ import annotations
 

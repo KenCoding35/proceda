@@ -1,4 +1,5 @@
-"""Skill loader: resolves file/directory paths and loads SKILL.md content."""
+"""ABOUTME: Resolves file or directory paths to SKILL.md files and loads their content.
+ABOUTME: Supports optional LLM-based auto-structuring for content lacking step headings."""
 
 from __future__ import annotations
 

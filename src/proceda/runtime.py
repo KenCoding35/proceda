@@ -1,4 +1,6 @@
-"""Runtime: orchestrates skill execution with event sinks and human interfaces."""
+"""ABOUTME: Orchestrates skill execution by wiring together LLM, MCP tools, and event sinks.
+ABOUTME: Provides Runtime (top-level executor) and RunHandle (async event stream handle).
+"""
 
 from __future__ import annotations
 

@@ -1,1 +1,1 @@
-"""Internal implementation details. Not part of the public API."""
+"""ABOUTME: Internal implementation details for the Proceda runtime. Not part of the public API."""

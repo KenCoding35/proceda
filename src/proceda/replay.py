@@ -1,4 +1,6 @@
-"""Replay engine: renders events from a saved run log."""
+"""ABOUTME: Replay engine that renders saved run event logs to the terminal.
+ABOUTME: Simulates timing between events and formats each event type for display.
+"""
 
 from __future__ import annotations
 

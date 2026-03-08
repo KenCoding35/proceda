@@ -1,4 +1,5 @@
-"""TUI widgets for the Proceda dev mode interface."""
+"""ABOUTME: Textual widgets for the Proceda dev mode TUI.
+ABOUTME: Provides skill header, step list, message stream, tool activity, and status bar widgets."""
 
 from __future__ import annotations
 

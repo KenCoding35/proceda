@@ -1,4 +1,6 @@
-"""Agent: high-level public API for loading and running skills."""
+"""ABOUTME: High-level public API for loading and running skills.
+ABOUTME: Provides the Agent class with from_path(), run(), run_stream() methods.
+"""
 
 from __future__ import annotations
 

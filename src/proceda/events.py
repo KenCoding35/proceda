@@ -1,4 +1,6 @@
-"""Event model: structured records of everything that happens during a run."""
+"""ABOUTME: Structured event model for runtime transitions and state changes.
+ABOUTME: Defines RunEvent, EventType, EventSink protocol, and sink implementations.
+"""
 
 from __future__ import annotations
 

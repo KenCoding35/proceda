@@ -1,4 +1,5 @@
-"""Main Textual application for Proceda TUI."""
+"""ABOUTME: Full-screen Textual application for running skills in dev mode.
+ABOUTME: Event-driven UI with step tracking, tools, and approvals."""
 
 from __future__ import annotations
 

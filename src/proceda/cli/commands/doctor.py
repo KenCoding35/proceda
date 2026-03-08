@@ -1,4 +1,6 @@
-"""CLI `doctor` command: validate environment and configuration."""
+"""ABOUTME: CLI `doctor` command that validates environment, config, and dependencies.
+ABOUTME: Checks Python version, API keys, required packages, MCP apps, and run directory.
+"""
 
 from __future__ import annotations
 

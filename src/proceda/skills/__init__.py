@@ -1,4 +1,4 @@
-"""Skill discovery, parsing, and loading."""
+"""ABOUTME: Skill discovery, parsing, and loading from SKILL.md files."""
 
 from proceda.skills.loader import load_skill
 from proceda.skills.parser import parse_skill

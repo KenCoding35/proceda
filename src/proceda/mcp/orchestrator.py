@@ -1,4 +1,5 @@
-"""MCP orchestrator: manages multiple MCP apps and enforces access policies."""
+"""ABOUTME: Manages connections to multiple MCP tool servers.
+ABOUTME: Handles tool discovery, access policies, and tool call routing."""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""Tool executor: bridges LLM tool calls to MCP orchestrator."""
+"""ABOUTME: Bridges LLM tool calls to the MCP orchestrator.
+ABOUTME: Executes tool calls, emits runtime events for each call/result, and handles errors."""
 
 from __future__ import annotations
 

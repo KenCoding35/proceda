@@ -1,4 +1,6 @@
-"""Human interface: protocol and implementations for human-in-the-loop interactions."""
+"""ABOUTME: Protocol and implementations for human-in-the-loop interactions.
+ABOUTME: Provides Terminal, AutoApprove, and Scripted implementations of HumanInterface.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""TUI key bindings configuration."""
+"""ABOUTME: Default keyboard bindings for the Proceda TUI.
+ABOUTME: Maps keys to actions like quit, approve, reject, skip, and help."""
 
 from __future__ import annotations
 
