@@ -1,0 +1,9 @@
+llm:
+  model: anthropic/claude-sonnet-4-20250514
+  temperature: 0.7
+
+apps:
+  - name: time-left
+    description: Time remaining in day, week, month, year
+    transport: stdio
+    command: ["uv", "run", "python", "examples/toy-greeting/time_left_server.py"]

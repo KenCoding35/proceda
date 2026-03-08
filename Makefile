@@ -1,4 +1,4 @@
-.PHONY: lint format test typecheck check install-hooks
+.PHONY: lint format test typecheck check install-hooks build clean
 
 lint:
 	uv run ruff check src/ tests/
@@ -16,3 +16,9 @@ check: lint format test typecheck
 
 install-hooks:
 	uv run pre-commit install
+
+build:
+	uv build
+
+clean:
+	rm -rf dist/ build/ *.egg-info
