@@ -8,8 +8,6 @@
 [![Python](https://img.shields.io/pypi/pyversions/proceda)](https://pypi.org/project/proceda/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-[![demo](https://asciinema.org/a/sNkQfO8cONSpHDlX.svg)](https://asciinema.org/a/sNkQfO8cONSpHDlX)
-
 Turn your team's Standard Operating Procedures into executable agents — without learning a framework, building a graph, or writing glue code. Proceda is a terminal-first Python SDK where a markdown file _is_ the agent definition, human approval checkpoints are declarative, and every tool connection goes through [MCP](https://modelcontextprotocol.io/).
 
 ## See it work
