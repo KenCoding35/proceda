@@ -105,7 +105,7 @@ class TestReplayRenderer:
         run_dir.mkdir()
         await self._write_sample_events(run_dir)
 
-        renderer = ReplayRenderer(speed=0)
+        renderer = ReplayRenderer()
         success = renderer.replay(run_dir)
         assert success
 
@@ -121,6 +121,6 @@ class TestReplayRenderer:
         run_dir.mkdir()
         await self._write_sample_events(run_dir)
 
-        renderer = ReplayRenderer(speed=0)
+        renderer = ReplayRenderer()
         success = renderer.replay(run_dir)
         assert success

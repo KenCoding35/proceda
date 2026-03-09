@@ -15,7 +15,6 @@ console = Console()
 
 def replay(
     run_id_or_path: str = typer.Argument(..., help="Run ID, run directory path, or partial match"),
-    speed: float = typer.Option(1.0, "--speed", "-s", help="Replay speed multiplier"),
     run_dir: str | None = typer.Option(None, "--run-dir", help="Base run directory"),
 ) -> None:
     """Replay a previous run from event logs."""
@@ -30,7 +29,7 @@ def replay(
                 console.print(f"  {d.name}")
             raise typer.Exit(code=2)
 
-        renderer = ReplayRenderer(console=console, speed=speed)
+        renderer = ReplayRenderer(console=console)
         success = renderer.replay(found)
 
         if not success:

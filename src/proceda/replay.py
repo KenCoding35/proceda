@@ -4,7 +4,6 @@ ABOUTME: Simulates timing between events and formats each event type for display
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 from rich.console import Console
@@ -17,9 +16,8 @@ from proceda.store.event_log import EventLogReader
 class ReplayRenderer:
     """Renders replay events to the terminal."""
 
-    def __init__(self, console: Console | None = None, speed: float = 1.0) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         self._console = console or Console()
-        self._speed = speed
 
     def replay(self, run_dir: Path) -> bool:
         """Replay a run from its event log directory. Returns True if successful."""
@@ -42,17 +40,7 @@ class ReplayRenderer:
                 )
             )
 
-        prev_time = None
-
         for event in reader.iter_events():
-            # Simulate timing
-            if prev_time and self._speed > 0:
-                delta = (event.timestamp - prev_time).total_seconds()
-                delay = min(delta / self._speed, 1.0)
-                if delay > 0.01:
-                    time.sleep(delay)
-            prev_time = event.timestamp
-
             self._render_event(event)
 
         # Print summary if available
