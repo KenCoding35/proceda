@@ -1,12 +1,11 @@
 """ABOUTME: Root CLI application built with Typer.
-ABOUTME: Registers subcommands (run, dev, lint, replay, doctor).
+ABOUTME: Registers subcommands (run, lint, replay, doctor).
 """
 
 from __future__ import annotations
 
 import typer
 
-from proceda.cli.commands.dev import dev
 from proceda.cli.commands.doctor import doctor
 from proceda.cli.commands.lint import lint
 from proceda.cli.commands.replay import replay
@@ -21,7 +20,6 @@ app = typer.Typer(
 
 # Register commands
 app.command()(run)
-app.command()(dev)
 app.command()(lint)
 app.command()(replay)
 app.command()(doctor)

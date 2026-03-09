@@ -55,11 +55,7 @@ The runtime follows this flow: **CLI/TUI/SDK -> Agent -> Runtime -> Executor -> 
 
 ### CLI (`cli/`)
 
-Built with Typer. Commands: `run` (interactive terminal), `dev` (full-screen Textual TUI), `lint`, `replay`, `doctor`. Entry point: `proceda.cli.main:app`.
-
-### TUI (`tui/`)
-
-Built with Textual. Event-driven — subscribes to `RunEvent`s rather than calling runtime internals.
+Built with Typer. Commands: `run` (interactive terminal), `lint`, `replay`, `doctor`. Entry point: `proceda.cli.main:app`.
 
 ## Configuration
 

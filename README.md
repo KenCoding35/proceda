@@ -81,7 +81,7 @@ SKILL.md ──→ Agent ──→ Runtime ──→ Executor ──→ LLM
                                       └──→ Event Log (JSONL, replayable)
 ```
 
-The runtime emits structured `RunEvent`s at every transition. Events drive the CLI output, the TUI, event logging, and SDK callbacks.
+The runtime emits structured `RunEvent`s at every transition. Events drive the CLI output, event logging, and SDK callbacks.
 
 ## Install
 
@@ -129,7 +129,6 @@ See [`proceda.yaml.example`](proceda.yaml.example) for the full reference, or re
 | Command | Description |
 |---------|-------------|
 | `proceda run <path>` | Run a skill interactively in the terminal |
-| `proceda dev <path>` | Full-screen TUI with live event stream |
 | `proceda lint <path>` | Validate a SKILL.md file |
 | `proceda replay <run-id>` | Replay a previous run from its event log |
 | `proceda doctor` | Check environment (Python, config, API keys, MCP servers) |

@@ -24,10 +24,6 @@ class TestCLIMain:
         result = runner.invoke(app, ["lint", "--help"])
         assert result.exit_code == 0
 
-    def test_dev_help(self) -> None:
-        result = runner.invoke(app, ["dev", "--help"])
-        assert result.exit_code == 0
-
     def test_replay_help(self) -> None:
         result = runner.invoke(app, ["replay", "--help"])
         assert result.exit_code == 0
