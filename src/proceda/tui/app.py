@@ -57,7 +57,12 @@ class TUIEventSink:
         self._app = app
 
     async def handle(self, event: RunEvent) -> None:
-        self._app.call_from_thread(self._app.on_run_event, event)
+        if not self._app._running:
+            return
+        try:
+            self._app.call_from_thread(self._app.on_run_event, event)
+        except RuntimeError:
+            pass
 
 
 class ProcedaApp(App[None]):
@@ -117,6 +122,7 @@ class ProcedaApp(App[None]):
         self._variables = variables or {}
         self._approval_future: asyncio.Future[ApprovalDecision] | None = None
         self._clarification_future: asyncio.Future[str] | None = None
+        self._running = False
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -132,6 +138,7 @@ class ProcedaApp(App[None]):
 
     async def on_mount(self) -> None:
         """Start the skill execution when the app mounts."""
+        self._running = True
         self.run_worker(self._execute_skill, thread=True)
 
     async def _execute_skill(self) -> None:
@@ -148,11 +155,16 @@ class ProcedaApp(App[None]):
 
     def on_run_event(self, event: RunEvent) -> None:
         """Handle a runtime event in the TUI."""
+        if not self._running:
+            return
+
         t = event.type
         p = event.payload
 
-        # Update step list
-        step_list = self.query_one(StepListWidget)
+        try:
+            step_list = self.query_one(StepListWidget)
+        except Exception:
+            return
 
         if t == EventType.STEP_STARTED:
             step_list.set_active_step(p.get("step_index", 0))
@@ -254,6 +266,10 @@ class ProcedaApp(App[None]):
         except Exception:
             if self._clarification_future and not self._clarification_future.done():
                 self._clarification_future.set_result("Proceed with default.")
+
+    async def action_quit(self) -> None:
+        self._running = False
+        self.exit()
 
     def action_help(self) -> None:
         messages = self.query_one(MessageStreamWidget)
