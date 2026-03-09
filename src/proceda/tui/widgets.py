@@ -71,8 +71,10 @@ class StepListWidget(Static):
             elif step.requires_post_approval:
                 markers = " [yellow]*[/yellow]"
 
-            style = "bold" if step.index == self._active_step else ""
-            lines.append(f"  {icon} [{style}]{step.index}. {step.title}[/{style}]{markers}")
+            title = f"{step.index}. {step.title}"
+            if step.index == self._active_step:
+                title = f"[bold]{title}[/bold]"
+            lines.append(f"  {icon} {title}{markers}")
 
         self.update(Text.from_markup("\n".join(lines)))
 
