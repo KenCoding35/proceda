@@ -64,7 +64,6 @@ def doctor() -> None:
         ("litellm", "LLM integration"),
         ("typer", "CLI framework"),
         ("rich", "Terminal formatting"),
-        ("textual", "TUI framework"),
         ("yaml", "Config parsing"),
         ("httpx", "HTTP client"),
     ]
