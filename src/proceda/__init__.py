@@ -5,6 +5,7 @@ ABOUTME: Re-exports core types: Agent, Skill, RunEvent, HumanInterface, RunSessi
 from proceda.agent import Agent
 from proceda.config import ProcedaConfig
 from proceda.events import EventType, RunEvent
+from proceda.execution import ContextManager, EmitFn, Executor, ToolExecutor
 from proceda.human import (
     AutoApproveHumanInterface,
     HumanInterface,
@@ -19,7 +20,10 @@ __version__ = "0.1.0"
 __all__ = [
     "Agent",
     "AutoApproveHumanInterface",
+    "ContextManager",
+    "EmitFn",
     "EventType",
+    "Executor",
     "HumanInterface",
     "RunEvent",
     "RunResult",
@@ -31,4 +35,5 @@ __all__ = [
     "SkillStep",
     "StepMarker",
     "TerminalHumanInterface",
+    "ToolExecutor",
 ]
