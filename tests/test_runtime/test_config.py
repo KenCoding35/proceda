@@ -1,4 +1,5 @@
-"""Tests for configuration loading."""
+"""ABOUTME: Tests for configuration loading, env var expansion, and config parsing.
+ABOUTME: Covers _expand_env, _expand_env_recursive, and ProcedaConfig.from_dict."""
 
 from __future__ import annotations
 
@@ -7,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from proceda.config import ProcedaConfig, _expand_env
+from proceda.config import ProcedaConfig, _expand_env, _expand_env_recursive
 from proceda.exceptions import ConfigError
 
 
@@ -29,6 +30,70 @@ class TestExpandEnv:
 
     def test_no_expansion_needed(self) -> None:
         assert _expand_env("plain text") == "plain text"
+
+
+class TestExpandEnvAdvanced:
+    def test_multiple_vars_in_one_string(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_HOST", "localhost")
+        monkeypatch.setenv("PROCEDA_PORT", "8080")
+        assert _expand_env("${PROCEDA_HOST}:${PROCEDA_PORT}") == "localhost:8080"
+
+    def test_mixed_set_and_unset(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_SET_VAR", "hello")
+        monkeypatch.delenv("PROCEDA_UNSET_VAR", raising=False)
+        result = _expand_env("${PROCEDA_SET_VAR} and ${PROCEDA_UNSET_VAR:-fallback}")
+        assert result == "hello and fallback"
+
+    def test_empty_default(self, monkeypatch) -> None:
+        monkeypatch.delenv("PROCEDA_MISSING", raising=False)
+        assert _expand_env("${PROCEDA_MISSING:-}") == ""
+
+    def test_env_var_set_to_empty(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_EMPTY", "")
+        # Empty string is a valid value; should not fall through to default
+        assert _expand_env("${PROCEDA_EMPTY:-fallback}") == ""
+
+    def test_recursive_expansion_in_dict(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_DB_HOST", "db.example.com")
+        monkeypatch.setenv("PROCEDA_DB_PORT", "5432")
+        obj = {
+            "connection": {
+                "host": "${PROCEDA_DB_HOST}",
+                "port": "${PROCEDA_DB_PORT}",
+            }
+        }
+        result = _expand_env_recursive(obj)
+        assert result == {"connection": {"host": "db.example.com", "port": "5432"}}
+
+    def test_recursive_expansion_in_list(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_ITEM_A", "alpha")
+        monkeypatch.setenv("PROCEDA_ITEM_B", "beta")
+        result = _expand_env_recursive(["${PROCEDA_ITEM_A}", "${PROCEDA_ITEM_B}", "literal"])
+        assert result == ["alpha", "beta", "literal"]
+
+    def test_non_string_values_pass_through(self) -> None:
+        assert _expand_env_recursive(42) == 42
+        assert _expand_env_recursive(True) is True
+        assert _expand_env_recursive(None) is None
+        assert _expand_env_recursive(3.14) == 3.14
+
+    def test_from_dict_expands_app_env(self, monkeypatch) -> None:
+        monkeypatch.setenv("PROCEDA_APP_TOKEN", "secret123")
+        monkeypatch.setenv("PROCEDA_APP_CMD", "my-server")
+        data = {
+            "apps": [
+                {
+                    "name": "test",
+                    "description": "Test app",
+                    "transport": "stdio",
+                    "command": ["${PROCEDA_APP_CMD}", "--verbose"],
+                    "env": {"API_TOKEN": "${PROCEDA_APP_TOKEN}"},
+                }
+            ]
+        }
+        config = ProcedaConfig.from_dict(data)
+        assert config.apps[0].command == ["my-server", "--verbose"]
+        assert config.apps[0].env == {"API_TOKEN": "secret123"}
 
 
 class TestProcedaConfig:
