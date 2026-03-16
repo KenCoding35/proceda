@@ -19,4 +19,5 @@ env/
 htmlcov/
 .coverage
 *.log
+*.cast
 proceda.yaml
