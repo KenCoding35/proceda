@@ -1,4 +1,5 @@
-"""Tests for event log writer and reader."""
+"""ABOUTME: Tests for event log writer, reader, run directory manager, and secret redaction.
+ABOUTME: Covers lifecycle edge cases, reader robustness, and redaction of nested structures."""
 
 from __future__ import annotations
 
@@ -203,3 +204,174 @@ class TestEventLogReader:
         reader = EventLogReader(tmp_path)
         events = list(reader.iter_events())
         assert len(events) == 3
+
+
+class TestEventLogWriterLifecycle:
+    @pytest.mark.asyncio
+    async def test_auto_open_on_first_handle(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path)
+        # Don't call open(), just handle() — should auto-open
+        event = RunEvent.create("run_1", EventType.RUN_STARTED)
+        await writer.handle(event)
+        await writer.close()
+
+        events_file = tmp_path / "events.jsonl"
+        assert events_file.exists()
+        lines = events_file.read_text().strip().split("\n")
+        assert len(lines) == 1
+
+    @pytest.mark.asyncio
+    async def test_close_idempotent(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path)
+        await writer.open()
+        await writer.handle(RunEvent.create("r", EventType.RUN_STARTED))
+        await writer.close()
+        await writer.close()  # second close should not error
+
+    @pytest.mark.asyncio
+    async def test_close_without_open(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path)
+        await writer.close()  # never opened — should not error
+
+    @pytest.mark.asyncio
+    async def test_write_after_close_reopens(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path)
+        await writer.open()
+        await writer.handle(RunEvent.create("r", EventType.RUN_STARTED))
+        await writer.close()
+
+        # Writing after close should auto-reopen
+        await writer.handle(RunEvent.create("r", EventType.RUN_COMPLETED))
+        await writer.close()
+
+        reader = EventLogReader(tmp_path)
+        events = reader.read_events()
+        assert len(events) == 2
+
+    @pytest.mark.asyncio
+    async def test_events_appended_across_reopen(self, tmp_path: Path) -> None:
+        writer = EventLogWriter(tmp_path)
+        await writer.open()
+        await writer.handle(RunEvent.create("r", EventType.STEP_STARTED, {"i": 1}))
+        await writer.handle(RunEvent.create("r", EventType.STEP_STARTED, {"i": 2}))
+        await writer.close()
+
+        # Reopen and write two more
+        await writer.handle(RunEvent.create("r", EventType.STEP_STARTED, {"i": 3}))
+        await writer.handle(RunEvent.create("r", EventType.STEP_STARTED, {"i": 4}))
+        await writer.close()
+
+        reader = EventLogReader(tmp_path)
+        events = reader.read_events()
+        assert len(events) == 4
+        assert [e.payload["i"] for e in events] == [1, 2, 3, 4]
+
+
+class TestEventLogReaderEdgeCases:
+    def test_read_empty_events_file(self, tmp_path: Path) -> None:
+        (tmp_path / "events.jsonl").write_text("", encoding="utf-8")
+        reader = EventLogReader(tmp_path)
+        assert reader.read_events() == []
+
+    def test_read_events_with_blank_lines(self, tmp_path: Path) -> None:
+        # Write events with blank lines interspersed
+        writer_events = [
+            RunEvent.create("r", EventType.STEP_STARTED, {"i": 1}),
+            RunEvent.create("r", EventType.STEP_STARTED, {"i": 2}),
+        ]
+        content = writer_events[0].to_json() + "\n\n" + writer_events[1].to_json() + "\n\n"
+        (tmp_path / "events.jsonl").write_text(content, encoding="utf-8")
+
+        reader = EventLogReader(tmp_path)
+        events = reader.read_events()
+        assert len(events) == 2
+
+    def test_iter_events_empty(self, tmp_path: Path) -> None:
+        (tmp_path / "events.jsonl").write_text("", encoding="utf-8")
+        reader = EventLogReader(tmp_path)
+        assert list(reader.iter_events()) == []
+
+    def test_read_metadata_missing_file(self, tmp_path: Path) -> None:
+        reader = EventLogReader(tmp_path)
+        assert reader.read_metadata() == {}
+
+
+class TestRunDirectoryManagerEdgeCases:
+    def test_create_with_auto_id(self, tmp_path: Path) -> None:
+        manager = RunDirectoryManager(str(tmp_path / "runs"))
+        run_dir = manager.create_run_dir()  # no run_id — auto-generate
+        assert run_dir.exists()
+        # Directory name should have timestamp + 8-char hex ID
+        assert len(run_dir.name.split("_")) >= 3
+
+    def test_list_runs_sorted_newest_first(self, tmp_path: Path) -> None:
+        import time
+
+        manager = RunDirectoryManager(str(tmp_path / "runs"))
+        dir1 = manager.create_run_dir("aaa")
+        time.sleep(1.1)  # ensure different timestamp
+        dir2 = manager.create_run_dir("bbb")
+
+        runs = manager.list_runs()
+        assert len(runs) == 2
+        # Newest (dir2) should be first since names sort by timestamp
+        assert runs[0] == dir2
+        assert runs[1] == dir1
+
+    def test_find_run_partial_match(self, tmp_path: Path) -> None:
+        manager = RunDirectoryManager(str(tmp_path / "runs"))
+        manager.create_run_dir("abcdef12")
+
+        # Search by partial ID prefix
+        found = manager.find_run("abcdef")
+        assert found is not None
+        assert "abcdef12" in found.name
+
+
+class TestRedactDictEdgeCases:
+    def test_empty_dict(self) -> None:
+        assert _redact_dict({}) == {}
+
+    def test_deeply_nested(self) -> None:
+        data = {
+            "level1": {
+                "level2": {
+                    "level3": {"api_key": "deep-secret", "name": "keep"},
+                    "password": "mid-secret",
+                },
+                "token": "top-secret",
+            }
+        }
+        result = _redact_dict(data)
+        assert result["level1"]["token"] == "**REDACTED**"
+        assert result["level1"]["level2"]["password"] == "**REDACTED**"
+        assert result["level1"]["level2"]["level3"]["api_key"] == "**REDACTED**"
+        assert result["level1"]["level2"]["level3"]["name"] == "keep"
+
+    def test_list_with_mixed_types(self) -> None:
+        data = {
+            "items": [
+                {"secret": "s1"},
+                "plain-string",
+                42,
+                {"value": "safe"},
+            ]
+        }
+        result = _redact_dict(data)
+        assert result["items"][0]["secret"] == "**REDACTED**"
+        assert result["items"][1] == "plain-string"
+        assert result["items"][2] == 42
+        assert result["items"][3]["value"] == "safe"
+
+    def test_case_insensitive_match(self) -> None:
+        data = {
+            "API_KEY": "k1",
+            "api_key": "k2",
+            "Api_Key": "k3",
+            "name": "keep",
+        }
+        result = _redact_dict(data)
+        assert result["API_KEY"] == "**REDACTED**"
+        assert result["api_key"] == "**REDACTED**"
+        assert result["Api_Key"] == "**REDACTED**"
+        assert result["name"] == "keep"
