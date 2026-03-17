@@ -3,11 +3,14 @@ ABOUTME: Recursively scans directories for SKILL.md files and provides lookup by
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from proceda.exceptions import SkillLoadError
 from proceda.skill import Skill
 from proceda.skills.loader import SKILL_FILENAME, load_skill
+
+logger = logging.getLogger(__name__)
 
 
 class SkillRegistry:
@@ -28,7 +31,8 @@ class SkillRegistry:
                     skill = load_skill(skill_file)
                     skills.append(skill)
                     self._cache[skill.name] = skill
-                except Exception:
+                except Exception as e:
+                    logger.warning("Failed to load skill from %s: %s", skill_file, e)
                     continue
         return skills
 
