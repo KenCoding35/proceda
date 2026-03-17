@@ -1,4 +1,5 @@
-"""Tests for the MCP orchestrator."""
+"""ABOUTME: Tests for the MCP orchestrator.
+ABOUTME: Covers tool discovery, access policies, denylist pattern matching, and required tools."""
 
 from __future__ import annotations
 
@@ -112,3 +113,75 @@ class TestMCPOrchestrator:
     def test_resolve_tool_not_found(self) -> None:
         orch = self._create_orchestrator()
         assert orch.resolve_tool("nonexistent") is None
+
+
+class TestDenylistPatterns:
+    """Tests for fnmatch-based tool denylist enforcement."""
+
+    def _make_orchestrator(
+        self, tool_names: list[tuple[str, str]], denylist: list[str]
+    ) -> MCPOrchestrator:
+        security = SecurityConfig(tool_denylist=denylist)
+        orch = MCPOrchestrator(security=security)
+        for app_name, tool_name in tool_names:
+            tool = MCPTool(name=tool_name, description="", app_name=app_name)
+            orch._tools[tool.qualified_name] = tool
+        return orch
+
+    def test_wildcard_match(self) -> None:
+        orch = self._make_orchestrator(
+            [("bad", "tool1"), ("bad", "tool2"), ("good", "tool1")],
+            denylist=["bad__*"],
+        )
+        assert not orch._is_tool_allowed("bad__tool1")
+        assert not orch._is_tool_allowed("bad__tool2")
+        assert orch._is_tool_allowed("good__tool1")
+
+    def test_exact_match(self) -> None:
+        orch = self._make_orchestrator(
+            [("app", "delete"), ("app", "read")],
+            denylist=["app__delete"],
+        )
+        assert not orch._is_tool_allowed("app__delete")
+        assert orch._is_tool_allowed("app__read")
+
+    def test_multiple_patterns(self) -> None:
+        orch = self._make_orchestrator(
+            [("danger", "nuke"), ("evil", "hack"), ("safe", "read")],
+            denylist=["danger__*", "evil__*"],
+        )
+        assert not orch._is_tool_allowed("danger__nuke")
+        assert not orch._is_tool_allowed("evil__hack")
+        assert orch._is_tool_allowed("safe__read")
+
+    def test_no_match(self) -> None:
+        orch = self._make_orchestrator(
+            [("app", "read")],
+            denylist=["other__*"],
+        )
+        assert orch._is_tool_allowed("app__read")
+
+    def test_empty_denylist(self) -> None:
+        orch = self._make_orchestrator(
+            [("app", "anything")],
+            denylist=[],
+        )
+        assert orch._is_tool_allowed("app__anything")
+
+    def test_all_tools_denied(self) -> None:
+        orch = self._make_orchestrator(
+            [("app", "read"), ("app", "write")],
+            denylist=["*"],
+        )
+        assert not orch._is_tool_allowed("app__read")
+        assert not orch._is_tool_allowed("app__write")
+        assert orch.get_available_tools() == []
+
+    def test_case_sensitivity(self) -> None:
+        """fnmatch is case-sensitive on POSIX; tool names should match exactly."""
+        orch = self._make_orchestrator(
+            [("App", "Read")],
+            denylist=["app__read"],
+        )
+        # "App__Read" should NOT match "app__read" (case-sensitive)
+        assert orch._is_tool_allowed("App__Read")
