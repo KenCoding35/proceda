@@ -1,4 +1,6 @@
-"""Tests for the CLI main entry point."""
+"""ABOUTME: Tests for the CLI main entry point and help output.
+ABOUTME: Validates that all subcommands are registered and respond to --help.
+"""
 
 from __future__ import annotations
 
