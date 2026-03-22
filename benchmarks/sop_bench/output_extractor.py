@@ -48,19 +48,21 @@ def _extract_from_tool_results(
     expected_set = set(expected_columns)
     output: dict[str, Any] = {}
 
-    for event in events:
-        if event.type != EventType.TOOL_COMPLETED:
-            continue
+    tool_completed_events = [e for e in events if e.type == EventType.TOOL_COMPLETED]
+
+    for event in tool_completed_events:
         result_text = event.payload.get("result", "")
         try:
-            result_dict = json.loads(result_text)
+            result_parsed = json.loads(result_text)
         except (json.JSONDecodeError, TypeError):
             continue
-        if not isinstance(result_dict, dict):
-            continue
-        for key, value in result_dict.items():
-            if key in expected_set:
-                output[key] = value
+        if isinstance(result_parsed, dict):
+            for key, value in result_parsed.items():
+                if key in expected_set:
+                    output[key] = value
+        elif isinstance(result_parsed, str | int | float) and len(expected_columns) == 1:
+            # Single expected column + bare value from last tool → assign it
+            output[expected_columns[0]] = result_parsed
 
     return output
 

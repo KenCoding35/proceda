@@ -34,8 +34,17 @@ def load_benchmark_data(domain: str, data_dir: str) -> tuple[list[dict], list[st
     metadata_path = domain_path / "metadata.json"
     with open(metadata_path) as f:
         metadata = json.load(f)
-    input_columns = metadata["input_columns"]
     output_columns = metadata["output_columns"]
+    input_columns = metadata.get("input_columns")
+
+    # If input_columns not specified, infer from CSV columns minus output columns
+    if input_columns is None:
+        csv_path = domain_path / "test_set_with_outputs.csv"
+        with open(csv_path, newline="") as f:
+            reader = csv.DictReader(f)
+            all_columns = reader.fieldnames or []
+        output_set = set(output_columns)
+        input_columns = [c for c in all_columns if c not in output_set]
 
     # Load CSV data
     csv_path = domain_path / "test_set_with_outputs.csv"
@@ -145,9 +154,16 @@ def run_evaluation(
     total = len(tasks)
 
     for i, task in enumerate(tasks):
-        task_id = task.get(
-            "product_id",
-            task.get("patient_id", task.get("account_id", f"task_{i}")),
+        # Try common ID column names across domains
+        task_id = (
+            task.get("product_id")
+            or task.get("patient_id")
+            or task.get("content_id")
+            or task.get("account_id")
+            or task.get("video_id")
+            or task.get("partner_id")
+            or task.get("order_id")
+            or f"task_{i}"
         )
         print(f"[{i + 1}/{total}] Running task {task_id}...", end=" ", flush=True)
 
