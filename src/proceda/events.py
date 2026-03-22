@@ -47,6 +47,9 @@ class EventType(enum.Enum):
     ERROR_RECOVERY_REQUESTED = "error.recovery_requested"
     ERROR_RECOVERY_SELECTED = "error.recovery_selected"
 
+    # LLM usage
+    LLM_USAGE = "llm.usage"
+
     # Runtime state
     STATUS_CHANGED = "status.changed"
     CONTEXT_UPDATED = "context.updated"

@@ -42,7 +42,12 @@ Run the dangerous operation on production.
 """
 
 
-def _make_complete_response(summary: str = "Done.") -> LLMResponse:
+def _make_complete_response(
+    summary: str = "Done.",
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    total_tokens: int = 0,
+) -> LLMResponse:
     return LLMResponse(
         content=summary,
         tool_calls=[
@@ -52,6 +57,9 @@ def _make_complete_response(summary: str = "Done.") -> LLMResponse:
                 arguments={"summary": summary},
             )
         ],
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
     )
 
 
@@ -375,3 +383,124 @@ class TestToolCallCircuitBreaker:
         # SKIP returns from _execute_step, then execute() calls complete_current_step
         # and the run completes
         assert session.status == RunStatus.COMPLETED
+
+
+class TestTokenTracking:
+    """Token usage tracking: LLM_USAGE events emitted and cumulative counts tracked."""
+
+    @pytest.mark.asyncio
+    async def test_llm_usage_event_emitted(self) -> None:
+        """LLM_USAGE event should be emitted after each LLM call with token counts."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        async def mock_complete(messages, tools=None):
+            return _make_complete_response(
+                "Done.", prompt_tokens=100, completion_tokens=50, total_tokens=150
+            )
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=None,
+            human=AutoApproveHumanInterface(),
+            emit=collector.handle,
+        )
+
+        await executor.execute()
+
+        assert session.status == RunStatus.COMPLETED
+
+        usage_events = collector.of_type(EventType.LLM_USAGE)
+        assert len(usage_events) == 1
+        payload = usage_events[0].payload
+        assert payload["prompt_tokens"] == 100
+        assert payload["completion_tokens"] == 50
+        assert payload["total_tokens"] == 150
+
+    @pytest.mark.asyncio
+    async def test_cumulative_token_counts_on_session(self) -> None:
+        """Session should accumulate token counts across multiple LLM calls."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        call_count = 0
+
+        async def mock_complete(messages, tools=None):
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                return LLMResponse(
+                    content=f"thinking {call_count}",
+                    tool_calls=[],
+                    prompt_tokens=100,
+                    completion_tokens=50,
+                    total_tokens=150,
+                )
+            return _make_complete_response(
+                "Done.", prompt_tokens=200, completion_tokens=80, total_tokens=280
+            )
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=None,
+            human=AutoApproveHumanInterface(),
+            emit=collector.handle,
+        )
+
+        await executor.execute()
+
+        assert session.status == RunStatus.COMPLETED
+        # 2 text-only calls (100 each) + 1 complete call (200) = 400 prompt tokens
+        assert session.total_prompt_tokens == 400
+        # 2 * 50 + 80 = 180
+        assert session.total_completion_tokens == 180
+        # 2 * 150 + 280 = 580
+        assert session.total_llm_tokens == 580
+
+    @pytest.mark.asyncio
+    async def test_run_completed_includes_token_totals(self) -> None:
+        """RUN_COMPLETED event should include cumulative token counts."""
+        skill = parse_skill(ONE_STEP_SKILL)
+        session = RunSession.create(skill.id, skill.name)
+        collector = CollectorEventSink()
+
+        async def mock_complete(messages, tools=None):
+            return _make_complete_response(
+                "Done.", prompt_tokens=500, completion_tokens=200, total_tokens=700
+            )
+
+        llm = AsyncMock()
+        llm.complete = mock_complete
+        llm.format_messages = lambda msgs: [{"role": "user", "content": "test"}]
+
+        executor = Executor(
+            skill=skill,
+            session=session,
+            llm=llm,
+            tool_executor=None,
+            human=AutoApproveHumanInterface(),
+            emit=collector.handle,
+        )
+
+        await executor.execute()
+
+        completed_events = collector.of_type(EventType.RUN_COMPLETED)
+        assert len(completed_events) == 1
+        payload = completed_events[0].payload
+        assert payload["prompt_tokens"] == 500
+        assert payload["completion_tokens"] == 200
+        assert payload["total_tokens"] == 700

@@ -65,6 +65,9 @@ class LLMResponse:
     tool_calls: list[ToolCall]
     reasoning: str | None = None
     raw_response: dict[str, Any] | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
 
 
 class LLMRuntime:
@@ -197,11 +200,23 @@ class LLMRuntime:
                     )
                 )
 
+        # Extract token usage
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        if hasattr(response, "usage") and response.usage:
+            prompt_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
+            completion_tokens = getattr(response.usage, "completion_tokens", 0) or 0
+            total_tokens = getattr(response.usage, "total_tokens", 0) or 0
+
         return LLMResponse(
             content=content if content else None,
             tool_calls=tool_calls,
             reasoning=reasoning,
             raw_response=response.model_dump() if hasattr(response, "model_dump") else None,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
         )
 
     def format_messages(self, run_messages: list[RunMessage]) -> list[dict[str, Any]]:

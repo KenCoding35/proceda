@@ -577,6 +577,9 @@ Required fields:
 - `completed_steps: int`
 - `failed_step: int | None`
 - `event_log_path: Path`
+- `prompt_tokens: int`
+- `completion_tokens: int`
+- `total_tokens: int`
 
 ---
 
@@ -626,6 +629,10 @@ Every meaningful runtime transition must emit a structured `RunEvent`.
 - `clarification.responded`
 - `error.recovery_requested`
 - `error.recovery_selected`
+
+#### LLM Usage Events
+
+- `llm.usage` — emitted after each LLM call with `prompt_tokens`, `completion_tokens`, `total_tokens`, and cumulative counters
 
 #### Runtime State Events
 
