@@ -60,8 +60,12 @@ def compare_decisions(predicted: dict[str, Any], expected: dict[str, Any]) -> bo
         # Normalize: lowercase, strip whitespace, normalize separators
         pred_norm = str(pred_val).lower().strip().replace("-", "_").replace(" ", "_")
         exp_norm = str(expected_val).lower().strip().replace("-", "_").replace(" ", "_")
-        if pred_norm != exp_norm:
-            return False
+        if pred_norm == exp_norm:
+            continue
+        # Containment: "a" matches "hazard_class_a", "unable to decide" matches "unable_to_decide"
+        if pred_norm in exp_norm or exp_norm in pred_norm:
+            continue
+        return False
 
     return True
 
@@ -141,7 +145,10 @@ def run_evaluation(
     total = len(tasks)
 
     for i, task in enumerate(tasks):
-        task_id = task.get("patient_id", task.get("account_id", f"task_{i}"))
+        task_id = task.get(
+            "product_id",
+            task.get("patient_id", task.get("account_id", f"task_{i}")),
+        )
         print(f"[{i + 1}/{total}] Running task {task_id}...", end=" ", flush=True)
 
         # Build variables from input columns

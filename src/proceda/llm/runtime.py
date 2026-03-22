@@ -171,6 +171,8 @@ class LLMRuntime:
 
     def _parse_response(self, response: Any) -> LLMResponse:
         """Parse a LiteLLM response into our internal model."""
+        if not response.choices:
+            return LLMResponse(content=None, tool_calls=[])
         choice = response.choices[0]
         message = choice.message
 

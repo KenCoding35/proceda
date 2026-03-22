@@ -121,7 +121,13 @@ def load_domain(domain: str, data_dir: str) -> tuple[Any, list[dict]]:
     if manager_cls is None:
         raise RuntimeError(f"No *Manager class found in {tools_path}")
 
-    manager = manager_cls()
+    # Suppress stdout during init — some managers print debug info
+    # which corrupts the JSON-RPC stream
+    import contextlib
+    import io
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        manager = manager_cls()
     return manager, bedrock_specs
 
 
