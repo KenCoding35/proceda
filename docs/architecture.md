@@ -178,6 +178,7 @@ proceda/
           run.py
           dev.py
           lint.py
+          convert.py
           replay.py
           doctor.py
       tui/
@@ -750,6 +751,7 @@ Rationale:
 proceda run <path>
 proceda dev <path>
 proceda lint <path>
+proceda convert <input> [--output PATH] [--name HINT] [--stdout]
 proceda replay <run-id-or-path>
 proceda doctor
 ```
@@ -775,6 +777,12 @@ proceda doctor
 - parse and validate
 - report warnings/errors
 - exit non-zero on errors
+
+#### `convert`
+
+- transform arbitrary SOP text into SKILL.md via LLM
+- validate output through parser with retry loop
+- support file input, stdin, and stdout output
 
 #### `replay`
 
