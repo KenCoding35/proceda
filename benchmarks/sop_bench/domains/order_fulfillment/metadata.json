@@ -1,0 +1,15 @@
+{
+  "name": "order_fulfillment",
+  "output_columns": ["expected_output"],
+  "input_columns": [
+    "order_id",
+    "product_id",
+    "quantity_requested",
+    "customer_id",
+    "order_total",
+    "destination_zip",
+    "package_weight",
+    "shipping_speed",
+    "order_priority"
+  ]
+}
