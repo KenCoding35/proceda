@@ -121,6 +121,10 @@ def parse_skill(
     if required_tools is not None and not isinstance(required_tools, list):
         raise SkillParseError("'required_tools' must be a list", path=path_str)
 
+    output_fields = metadata.get("output_fields")
+    if output_fields is not None and not isinstance(output_fields, list):
+        raise SkillParseError("'output_fields' must be a list", path=path_str)
+
     steps = _parse_steps(body, path=path_str)
 
     skill_id = hashlib.sha256(content.encode()).hexdigest()[:16]
@@ -134,6 +138,7 @@ def parse_skill(
         path=path,
         source_url=source_url,
         required_tools=required_tools,
+        output_fields=output_fields,
     )
 
 

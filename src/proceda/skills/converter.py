@@ -76,6 +76,7 @@ async def convert_sop(
     config: LLMConfig,
     name_hint: str | None = None,
     tool_context: list[dict[str, str]] | None = None,
+    output_fields: list[str] | None = None,
 ) -> str:
     """Convert arbitrary SOP text into valid SKILL.md format using an LLM.
 
@@ -86,6 +87,9 @@ async def convert_sop(
         tool_context: List of available tools with 'name' and 'description' keys.
             When provided, the converter will reference these tools in the SKILL.md
             steps and include them in required_tools.
+        output_fields: List of expected output field names. When provided, the
+            converter adds output_fields to the YAML frontmatter and instructs the
+            final step to emit them as XML tags.
 
     Returns the complete SKILL.md content as a string.
     Raises ConversionError if conversion fails after retries.
@@ -122,6 +126,15 @@ async def convert_sop(
             f"\n\nAvailable MCP tools. Use these EXACT tool names and EXACT parameter "
             f"names in step instructions. List relevant tools in required_tools.\n"
             f"{tools_block}"
+        )
+    if output_fields:
+        fields_yaml = "\n".join(f"  - {f}" for f in output_fields)
+        fields_tags = ", ".join(f"<{f}>value</{f}>" for f in output_fields)
+        user_content += (
+            f"\n\nThe skill MUST declare these output_fields in the YAML frontmatter:\n"
+            f"output_fields:\n{fields_yaml}\n"
+            f"The final step MUST instruct the agent to include these output values "
+            f"in the complete_step summary using XML tags: {fields_tags}"
         )
 
     messages: list[dict[str, str]] = [

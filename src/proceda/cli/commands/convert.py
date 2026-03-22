@@ -39,6 +39,11 @@ def convert(
         "--tools",
         help="Path to JSON file with tool schemas (list of {name, description})",
     ),
+    output_fields: str | None = typer.Option(
+        None,
+        "--output-fields",
+        help="Comma-separated expected output field names (e.g., 'final_decision,score')",
+    ),
     stdout: bool = typer.Option(
         False,
         "--stdout",
@@ -109,10 +114,21 @@ def convert(
                         }
                     )
 
+        # Parse output fields
+        parsed_output_fields = None
+        if output_fields:
+            parsed_output_fields = [f.strip() for f in output_fields.split(",") if f.strip()]
+
         # Convert
         console.print("[dim]Converting SOP to SKILL.md...[/dim]")
         result = asyncio.run(
-            convert_sop(sop_text, llm_config, name_hint=effective_name, tool_context=tool_context)
+            convert_sop(
+                sop_text,
+                llm_config,
+                name_hint=effective_name,
+                tool_context=tool_context,
+                output_fields=parsed_output_fields,
+            )
         )
 
         # Lint the result

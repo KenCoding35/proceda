@@ -189,7 +189,12 @@ class Executor:
         step = self._skill.get_step(step_index)
         session = self._session
 
-        step_prompt = build_step_prompt(step)
+        is_last_step = step_index == self._skill.step_count
+        step_prompt = build_step_prompt(
+            step,
+            is_last_step=is_last_step,
+            output_fields=self._skill.output_fields,
+        )
         session.add_message(RunMessage.create("user", step_prompt, is_critical=True))
 
         text_only_count = 0

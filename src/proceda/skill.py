@@ -51,6 +51,7 @@ class Skill:
     path: Path | None = None
     source_url: str | None = None
     required_tools: list[str] | None = None
+    output_fields: list[str] | None = None
 
     @property
     def step_count(self) -> int:
