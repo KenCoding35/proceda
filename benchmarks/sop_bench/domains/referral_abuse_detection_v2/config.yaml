@@ -1,0 +1,21 @@
+llm:
+  model: gemini/gemini-3-flash-preview
+  temperature: 0.0
+  max_tokens: 4096
+  api_key_env: GEMINI_API_KEY
+
+apps:
+  - name: sop-bench
+    description: SOP-Bench referral abuse detection v2 tools
+    transport: stdio
+    command:
+      - uv
+      - --directory
+      - /Users/haldar/repos/gh/proceda.sop-bench-referral-v2
+      - run
+      - python
+      - benchmarks/sop_bench/mcp_bridge.py
+      - --domain
+      - referral_abuse_detection_v2
+      - --data-dir
+      - /Users/haldar/repos/3p/sop-bench/src/amazon_sop_bench/benchmarks/data
