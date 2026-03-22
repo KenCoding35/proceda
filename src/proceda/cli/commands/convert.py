@@ -34,6 +34,11 @@ def convert(
         "--name",
         help="Suggested skill name (kebab-case)",
     ),
+    tools: str | None = typer.Option(
+        None,
+        "--tools",
+        help="Path to JSON file with tool schemas (list of {name, description})",
+    ),
     stdout: bool = typer.Option(
         False,
         "--stdout",
@@ -70,9 +75,34 @@ def convert(
             if stem not in ("sop", "procedure", "process", "document", "doc"):
                 effective_name = stem.replace("_", "-").replace(" ", "-")
 
+        # Load tool context if provided
+        tool_context = None
+        if tools:
+            import json as _json
+
+            tools_path = Path(tools).resolve()
+            if not tools_path.is_file():
+                console.print(f"[red]Tools file not found: {tools_path}[/red]")
+                raise typer.Exit(code=2)
+            raw_tools = _json.loads(tools_path.read_text(encoding="utf-8"))
+            # Support Bedrock format (with toolSpec wrapper) or plain list
+            tool_context = []
+            for spec in raw_tools:
+                if "toolSpec" in spec:
+                    ts = spec["toolSpec"]
+                    tool_context.append(
+                        {"name": ts["name"], "description": ts.get("description", "")}
+                    )
+                else:
+                    tool_context.append(
+                        {"name": spec["name"], "description": spec.get("description", "")}
+                    )
+
         # Convert
         console.print("[dim]Converting SOP to SKILL.md...[/dim]")
-        result = asyncio.run(convert_sop(sop_text, llm_config, name_hint=effective_name))
+        result = asyncio.run(
+            convert_sop(sop_text, llm_config, name_hint=effective_name, tool_context=tool_context)
+        )
 
         # Lint the result
         lint_result = lint_skill(result)

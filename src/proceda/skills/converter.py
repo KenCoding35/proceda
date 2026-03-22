@@ -47,6 +47,10 @@ human sign-off, review, verification, or approval after the step completes
 - Add `[OPTIONAL]` where steps are explicitly conditional or optional
 - Only include `required_tools` if the SOP explicitly references specific tools or systems \
 that map to MCP tool names; otherwise omit the field entirely
+- If available MCP tools are listed in the input, reference them by name in the step \
+instructions and include the relevant ones in `required_tools`. Each step should call \
+exactly one tool where applicable. Specify which arguments to pass to each tool call \
+using the variable names provided.
 - Output ONLY the SKILL.md content — no explanation, no wrapping, no code fences
 """
 
@@ -69,8 +73,17 @@ async def convert_sop(
     text: str,
     config: LLMConfig,
     name_hint: str | None = None,
+    tool_context: list[dict[str, str]] | None = None,
 ) -> str:
     """Convert arbitrary SOP text into valid SKILL.md format using an LLM.
+
+    Args:
+        text: The raw SOP text to convert.
+        config: LLM configuration.
+        name_hint: Suggested kebab-case name for the skill.
+        tool_context: List of available tools with 'name' and 'description' keys.
+            When provided, the converter will reference these tools in the SKILL.md
+            steps and include them in required_tools.
 
     Returns the complete SKILL.md content as a string.
     Raises ConversionError if conversion fails after retries.
@@ -87,6 +100,14 @@ async def convert_sop(
     user_content = text
     if name_hint:
         user_content = f"Suggested skill name: {name_hint}\n\n{text}"
+    if tool_context:
+        tools_block = "\n".join(
+            f"  - {t['name']}: {t.get('description', '')}" for t in tool_context
+        )
+        user_content += (
+            f"\n\nAvailable MCP tools (use these in step instructions and "
+            f"list relevant ones in required_tools):\n{tools_block}"
+        )
 
     messages: list[dict[str, str]] = [
         {"role": "system", "content": _CONVERT_PROMPT},

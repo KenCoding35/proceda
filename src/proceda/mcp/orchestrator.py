@@ -107,8 +107,7 @@ class MCPOrchestrator:
         """Return list of required tools that are not available."""
         if not self._required_tools:
             return []
-        available = set(self._tools.keys())
-        return [t for t in self._required_tools if t not in available]
+        return [t for t in self._required_tools if self.resolve_tool(t) is None]
 
     def _is_tool_allowed(self, qualified_name: str) -> bool:
         """Check if a tool is allowed by denylist and required_tools policies."""

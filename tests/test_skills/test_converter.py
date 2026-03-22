@@ -243,6 +243,59 @@ class TestConvertSop:
         assert skill.name == "test-skill"
 
     @pytest.mark.asyncio
+    async def test_tool_context_included_in_prompt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When tool_context is provided, tool names appear in the LLM prompt."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        config = LLMConfig()
+
+        valid_with_tools = """\
+---
+name: patient-intake
+description: Patient intake with tool references
+required_tools:
+  - sop-bench__validateInsurance
+  - sop-bench__verifyPharmacy
+---
+
+### Step 1: Validate insurance
+Call `validateInsurance` with the patient's insurance details.
+
+### Step 2: Verify pharmacy
+Call `verifyPharmacy` with the patient's pharmacy details.
+"""
+
+        mock_runtime = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.content = valid_with_tools
+        mock_response.tool_calls = []
+        mock_runtime.complete.return_value = mock_response
+
+        tool_context = [
+            {"name": "validateInsurance", "description": "Validates insurance coverage"},
+            {"name": "verifyPharmacy", "description": "Verifies pharmacy details"},
+        ]
+
+        with patch("proceda.skills.converter.LLMRuntime", return_value=mock_runtime):
+            result = await convert_sop(
+                "Check insurance then verify pharmacy.",
+                config,
+                tool_context=tool_context,
+            )
+
+        # Tool names should be in the user message
+        call_args = mock_runtime.complete.call_args
+        messages = call_args[0][0]
+        user_msg = next(m for m in messages if m["role"] == "user")
+        assert "validateInsurance" in user_msg["content"]
+        assert "verifyPharmacy" in user_msg["content"]
+
+        from proceda.skills.parser import parse_skill
+
+        skill = parse_skill(result)
+        assert skill.required_tools is not None
+        assert "sop-bench__validateInsurance" in skill.required_tools
+
+    @pytest.mark.asyncio
     async def test_no_api_key_raises(self) -> None:
         """No API key available raises ConversionError."""
         config = LLMConfig(api_key_env="NONEXISTENT_KEY_12345")
