@@ -236,6 +236,20 @@ Results are saved to:
 After each domain run, update the Obsidian note at
 `~/Obsidian_iCloud/notes.md/SOP-Bench Analysis.md` with the results table.
 
+**CRITICAL: Save traces before cleaning up.** The `results/` directory is gitignored, so
+traces will be lost if the working directory is deleted (e.g., when removing a git worktree).
+Always copy traces to the main repo's results directory before removing a worktree:
+
+```bash
+cp -r ~/repos/gh/proceda.{worktree}/benchmarks/sop_bench/results/traces/{domain}_* \
+  ~/repos/gh/proceda/benchmarks/sop_bench/results/traces/
+cp ~/repos/gh/proceda.{worktree}/benchmarks/sop_bench/results/{domain}_* \
+  ~/repos/gh/proceda/benchmarks/sop_bench/results/
+```
+
+Traces are essential for post-hoc failure analysis, re-scoring with updated extractors,
+and auditing benchmark performance without re-running (which costs time and money).
+
 Commit the SKILL.md and config.yaml (results/ is gitignored). Tag significant milestones:
 
 ```bash
