@@ -133,12 +133,11 @@ labels following a closure-priority rule not stated in the SOP) and `order_fulfi
 
 ## Verification
 
-Running a strict SOP-following agent (Proceda with Gemini 3 Flash Preview) against all
-200 tasks produces:
-- **159/200 (79.5%) TSR** raw
-- **159/161 (98.8%) TSR** excluding the 39 SOP/CSV-inconsistent tasks
-- The 39 SOP/CSV failures all predict "Temporary Suspension" where CSV expects "Warning Issued"
-- The remaining 2 failures are genuine agent reasoning errors (unrelated to this bug)
+Computing the SOP's enforcement mapping programmatically across all 200 tasks (applying
+section 5.6 rules to each row's `risk_level`) produces exactly 161 agreements and 39
+disagreements — the same 39 tasks listed above. All 39 disagreements have the same form:
+the SOP rule yields "Temporary Suspension" (Medium risk), while the CSV label is
+"Warning Issued." No other tasks are affected.
 
 ## Suggested Fix
 
