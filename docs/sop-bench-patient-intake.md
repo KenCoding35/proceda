@@ -181,16 +181,63 @@ Results are saved to `benchmarks/sop_bench/results/`:
 | Run 7 | 83.3% (55/66) | Full run | 11 fails on empty CSV values |
 | Run 8 | **97.0% (64/66)** | Empty value handling in bridge | 2 remaining edge cases |
 
-## Remaining Failures (2/66)
+## Remaining Failures (2/66): Deep Analysis
 
-Tasks P100033 and P100015 both fail because `validatePrescriptionBenefits` returns no result.
-The LLM occasionally passes incorrect parameter names for this specific tool. All other 5
-fields are correct for both tasks. These are non-deterministic LLM failures that could be
-addressed by:
+Tasks P100033 and P100015 both fail with the exact same root cause — and it's a fascinating
+one that highlights the tension between "thinking" and "following procedures."
 
-- Further improving the converter prompt
-- Using a stronger model
-- Adding retry logic for failed tool calls
+### What Happened
+
+In both tasks:
+
+1. Step 1 (`validateInsurance`) returns `"invalid"`
+2. The LLM enters Step 2 (`validatePrescriptionBenefits`), **reasons that prescription
+   validation is unnecessary since primary insurance already failed**, and calls `complete_step`
+   without ever calling the tool
+3. The output extractor finds no `TOOL_COMPLETED` event for `prescription_insurance_validation`
+4. At Step 6, the LLM passes `"prescription_insurance_validation": "unavailable"` (an invented
+   value) to `registerPatient`
+5. The ground truth says `prescription_insurance_validation: "valid"` — the tool would have
+   returned this if called
+
+### Why It's Interesting
+
+The LLM made a **clinically reasonable decision**: if primary insurance is invalid, why bother
+validating prescription benefits? A human might make the same judgment call.
+
+But this is exactly what SOPs are designed to prevent. An SOP says "do step 2" — you do step 2,
+even if you think the result doesn't matter. The whole point of a Standard Operating Procedure
+is to ensure every step is executed regardless of the operator's judgment. The 2017 Equifax
+breach happened because someone skipped a "routine" patch step.
+
+Proceda's executor DID start and complete Step 2 — the step lifecycle events confirm this. The
+LLM just chose not to call the tool during that step. All 5 other fields are correct. This is
+a "letter of the law" failure, not a reasoning failure.
+
+### Fix Options
+
+**Option A: System prompt fix (recommended)**
+
+Add a rule to Proceda's executor system prompt (`src/proceda/llm/prompts.py`):
+
+> "If a step instructs you to call a specific tool, you MUST call it — do not skip tool calls
+> based on your own judgment about whether the result is needed."
+
+This is philosophically correct for an SOP runner. Proceda's value proposition is structured
+execution, and "always execute the tools your step tells you to" is a natural rule. It's not
+benchmark-specific — it's how SOPs work in the real world.
+
+**Option B: Converter fix**
+
+Make the SKILL.md step instructions explicitly say "You MUST call this tool regardless of prior
+results." This addresses the symptom but not the root cause — every new SKILL.md would need
+this boilerplate.
+
+**Option C: Output extractor hack**
+
+Not viable. Even if we capture the LLM's invented value from `registerPatient`'s arguments,
+`"unavailable"` ≠ `"valid"` so it still wouldn't match ground truth. The fix must ensure the
+tool is actually called.
 
 ## Key Technical Decisions
 
