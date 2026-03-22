@@ -160,6 +160,7 @@ def run_evaluation(
             or task.get("patient_id")
             or task.get("content_id")
             or task.get("account_id")
+            or task.get("business_id")
             or task.get("video_id")
             or task.get("partner_id")
             or task.get("order_id")
