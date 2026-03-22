@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (referral_abuse_detection_v1 added)
+Last updated: 2026-03-22 (traffic_spoofing_detection added)
 
 ## Overview
 
@@ -23,6 +23,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Order Fulfillment | 30 | **86.7%** (100%‡) | — | — | — |
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
+| Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below).
@@ -92,6 +93,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-referral-abuse-v1.md` — 95.5% TSR, 100% on CSV-consistent tasks
 - `docs/sop-bench-order-fulfillment.md` — 86.7% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
+- `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
@@ -112,9 +114,8 @@ Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
 | Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
-| Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
-| Traffic Spoofing | 200 | 6 | 86% | Threshold-based |
 | Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
+| Video Classification | 196 | 10 | 95% | Judgment-heavy |
 
 ### Domains to Skip (broken tools)
 
@@ -133,8 +134,6 @@ From the guide's suggested order:
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
 | Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
-| Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
-| Traffic Spoofing | 200 | 6 | 86% | Threshold-based |
 | Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
 | Email Intent | 195 | 5 | 99% | SOP has git merge conflict |
@@ -163,6 +162,11 @@ From the guide's suggested order:
 6. **Message extraction should override tool results.** When the agent's final answer (XML
    tags in complete_step) disagrees with a raw tool result, the agent's deliberate answer
    is correct. Fixed in the output extractor after warehouse inspection revealed the issue.
+
+7. **SOP/CSV disagreements are a recurring pattern.** At least 3 domains have CSV ground
+   truth that contradicts the SOP's explicit rules: referral_abuse_v1 (9 tasks),
+   traffic_spoofing (39 tasks), and order_fulfillment (4 tasks). Agents that faithfully
+   follow the SOP get penalized. The paper attributes these to agent reasoning failures.
 
 ## File Map
 
@@ -197,6 +201,9 @@ benchmarks/sop_bench/
 │   │   ├── SKILL.md
 │   │   ├── config.yaml
 │   │   └── metadata.json      # Explicit input_columns override
+│   ├── traffic_spoofing_detection/  # 79.5% TSR (98.8% on valid tasks)
+│   │   ├── SKILL.md
+│   │   └── config.yaml
 │   └── know_your_business/    # Incomplete (rate limited)
 │       ├── SKILL.md
 │       └── config.yaml
@@ -211,6 +218,7 @@ docs/
 ├── sop-bench-customer-service.md   # Detailed analysis
 ├── sop-bench-order-fulfillment.md  # Detailed analysis
 ├── sop-bench-warehouse-inspection.md  # Detailed analysis
+├── sop-bench-traffic-spoofing.md      # Detailed analysis
 ├── sop-bench-tool-csv-mismatch-analysis.md  # Cross-domain tool bug analysis
 └── sop-bench-tool-agreement-audit.md  # Tool/CSV agreement rates
 
