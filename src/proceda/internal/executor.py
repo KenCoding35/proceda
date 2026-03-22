@@ -151,6 +151,9 @@ class Executor:
                     {
                         "completed_steps": len(session.completed_steps),
                         "total_steps": self._skill.step_count,
+                        "prompt_tokens": session.total_prompt_tokens,
+                        "completion_tokens": session.total_completion_tokens,
+                        "total_tokens": session.total_llm_tokens,
                     },
                 )
             )
@@ -205,6 +208,27 @@ class Executor:
             formatted = self._llm.format_messages(trimmed)
 
             response = await self._llm.complete(formatted, tools=all_tools)
+
+            # Track token usage
+            if response.total_tokens > 0:
+                session.total_prompt_tokens += response.prompt_tokens
+                session.total_completion_tokens += response.completion_tokens
+                session.total_llm_tokens += response.total_tokens
+                await self._emit(
+                    RunEvent.create(
+                        session.id,
+                        EventType.LLM_USAGE,
+                        {
+                            "step_index": step_index,
+                            "prompt_tokens": response.prompt_tokens,
+                            "completion_tokens": response.completion_tokens,
+                            "total_tokens": response.total_tokens,
+                            "cumulative_prompt_tokens": session.total_prompt_tokens,
+                            "cumulative_completion_tokens": session.total_completion_tokens,
+                            "cumulative_total_tokens": session.total_llm_tokens,
+                        },
+                    )
+                )
 
             # Handle reasoning
             if response.reasoning:

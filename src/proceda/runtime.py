@@ -73,6 +73,9 @@ class RunHandle:
             total_steps=self.skill.step_count,
             failed_step=failed_step,
             event_log_path=self.event_log_path,
+            prompt_tokens=self.session.total_prompt_tokens,
+            completion_tokens=self.session.total_completion_tokens,
+            total_tokens=self.session.total_llm_tokens,
         )
 
 
