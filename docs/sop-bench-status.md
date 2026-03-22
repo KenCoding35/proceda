@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22
+Last updated: 2026-03-22 (warehouse_package_inspection added)
 
 ## Overview
 
@@ -9,7 +9,7 @@ across 14 business domains. We run `proceda convert --tools --output-fields` to 
 each domain's SOP into a SKILL.md, then execute all tasks via the evaluation harness.
 
 **Branch:** `experiment/sop-bench`
-**Model:** Gemini 2.5 Flash (`gemini/gemini-2.5-flash`), temperature=0.0
+**Models:** Gemini 2.5 Flash (domains 1-5), Gemini 3 Flash Preview (domain 6+), temperature=0.0
 **API key:** `pass soprun/GEMINI_API_KEY`
 
 ## Results Summary
@@ -19,11 +19,16 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Patient Intake | 66 | **97.0%** | Claude 4.1 Opus ReAct | 100% | `sop-bench-patient-intake-97pct` |
 | Dangerous Goods | 274 | **94.2%** | Claude 4 Sonnet FC | 87% | `sop-bench-dangerous-goods-94pct` |
 | Customer Service | 156 | **81.4%** | Llama 3.3 70B ReAct | 79% | `sop-bench-customer-service-81pct` |
-| Content Flagging | 168 | 31.0% | DeepSeek R1 ReAct | 60% | `sop-bench-content-flagging-31pct` |
+| Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
+| Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
+† = Domain has broken mock tools (see tool mismatch analysis below).
+
 **SOTA on 2 domains** (dangerous_goods, customer_service). Near-SOTA on patient_intake.
-Content flagging has non-deterministic tools (benchmark bug). KYB blocked by rate limiting.
+Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
+(mock logic disagrees with CSV ~55%), video_annotation (20/27 tools are stubs).
+KYB blocked by rate limiting.
 
 ## What Was Done
 
@@ -34,13 +39,13 @@ Content flagging has non-deterministic tools (benchmark bug). KYB blocked by rat
    conversion, NaN sanitization, empty value replacement, stdout suppression.
 
 2. **Output Extractor** (`benchmarks/sop_bench/output_extractor.py`) — Extracts structured
-   output from Proceda run events. Strategies (in priority order):
-   - Tool results (TOOL_COMPLETED events with dict key matching)
-   - Bare values from single-column tool results
+   output from Proceda run events. Message extraction (agent's deliberate answer) takes
+   priority over raw tool results. Strategies:
    - XML tags in summaries/messages (`<field_name>value</field_name>`)
    - `<final_output>{JSON}</final_output>` blocks
    - Bare JSON objects
    - Prose patterns ("status is VALUE")
+   - Tool results (TOOL_COMPLETED events, used as fallback)
 
 3. **Evaluation Harness** (`benchmarks/sop_bench/harness.py`) — CLI that loads SOP-Bench
    CSV data, runs Proceda against each task, scores against ground truth, saves traces.
@@ -81,38 +86,41 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-dangerous-goods.md` — 94.2% TSR (SOTA), 16 failures analyzed
 - `docs/sop-bench-content-flagging.md` — 31% TSR, non-deterministic tools explained
 - `docs/sop-bench-customer-service.md` — 81.4% TSR (SOTA), output_fields breakthrough
+- `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
+- `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
+- `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
 ### Process Guide
 
 `docs/sop-bench-guide.md` has the complete step-by-step process for running any domain.
 Follow it exactly for new domains.
 
-## What's Next: Know Your Business
+## What's Next
+
+### Know Your Business (blocked)
 
 KYB (90 tasks, 8 tools, 12 steps) is set up but blocked by Gemini rate limiting.
+Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 
-**Files ready:**
-- `benchmarks/sop_bench/domains/know_your_business/SKILL.md` — Converted with output_fields
-- `benchmarks/sop_bench/domains/know_your_business/config.yaml` — Gemini 2.5 Flash config
+### Recommended Next Domains
 
-**To run:**
-```bash
-export GEMINI_API_KEY=$(pass soprun/GEMINI_API_KEY)
-uv run python -m benchmarks.sop_bench.harness --domain know_your_business --workers 3
-```
+| Domain | Tasks | Tools | Best Baseline | Notes |
+|--------|-------|-------|---------------|-------|
+| Order Fulfillment | 30 | 4 | — | Simplest, quick validation |
+| Referral Abuse v1 | 200 | 3 | 98% | Boolean scoring, high baseline |
+| Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
+| Traffic Spoofing | 200 | 6 | 86% | Threshold-based |
+| Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
 
-**Known issues with KYB:**
-- Rate limiting: 12 steps × 90 tasks = ~1,500+ API calls. Hit Gemini rate limits.
-- Judgment-heavy: The SOP asks the agent to "use your experience" to detect typos vs
-  fabricated data. The boundary between "escalate" and "awaiting information" is subjective.
-- The 5-task test run got 60% (3/5), with failures being `escalate` vs `awaiting information`.
-- Best baseline is only 58% (Claude 4.5 Opus ReAct) — this is the hardest domain.
+### Domains to Skip (broken tools)
 
-**Options to unblock:**
-1. Wait for rate limits to reset (usually ~1 hour)
-2. Use a different API key
-3. Use Claude Haiku (change model in config.yaml to `claude-haiku-4-5-20251001`)
-4. Lower parallelism (`--workers 1` or `--workers 3`)
+| Domain | Issue |
+|--------|-------|
+| Content Flagging | `random.random()` in tools |
+| Warehouse Inspection | Mock logic ~55% agreement with CSV |
+| Video Annotation | 20/27 tools are `pass` stubs |
+
+See `docs/sop-bench-tool-csv-mismatch-analysis.md` for details.
 
 ## Remaining Domains (Not Yet Attempted)
 
@@ -127,8 +135,7 @@ From the guide's suggested order:
 | Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
 | Email Intent | 195 | 5 | 99% | SOP has git merge conflict |
-| Warehouse Inspection | 150 | 7 | 69% | Needs image understanding |
-| Video Annotation | 125 | 26 | 58% | 20 distractor tools |
+| Video Annotation | 125 | 26 | 58% | 20/27 tools are stubs — broken |
 
 ## Key Learnings
 
@@ -142,12 +149,17 @@ From the guide's suggested order:
 3. **Model quality matters for reasoning.** Gemini 2.5 Flash is cheap but weaker on complex
    branching logic. The 29 remaining customer_service failures are all reasoning errors.
 
-4. **Benchmark quirks exist.** Content flagging has `random.random()` in tools. Some domains
-   have NaN values in tool results. Some tools have `print()` statements that corrupt MCP.
-   The harness handles all of these.
+4. **Three domains have broken tools.** Content flagging (random.random()), warehouse
+   inspection (mock logic ~55% agreement), and video annotation (20/27 stubs). The paper
+   doesn't acknowledge this, attributing low scores to agent reasoning failures. See the
+   tool mismatch analysis docs for details.
 
 5. **Extraction is the bottleneck, not execution.** Every domain achieves 100% ECR. Failures
    are either extraction misses or LLM reasoning errors, never execution crashes.
+
+6. **Message extraction should override tool results.** When the agent's final answer (XML
+   tags in complete_step) disagrees with a raw tool result, the agent's deliberate answer
+   is correct. Fixed in the output extractor after warehouse inspection revealed the issue.
 
 ## File Map
 
@@ -171,6 +183,10 @@ benchmarks/sop_bench/
 │   ├── customer_service/      # 81.4% TSR (SOTA)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
+│   ├── warehouse_package_inspection/  # 53.3% TSR (100% on valid tasks)
+│   │   ├── SKILL.md
+│   │   ├── config.yaml
+│   │   └── metadata.json      # Explicit input_columns override
 │   └── know_your_business/    # Incomplete (rate limited)
 │       ├── SKILL.md
 │       └── config.yaml
@@ -182,7 +198,10 @@ docs/
 ├── sop-bench-patient-intake.md     # Detailed analysis
 ├── sop-bench-dangerous-goods.md    # Detailed analysis
 ├── sop-bench-content-flagging.md   # Detailed analysis
-└── sop-bench-customer-service.md   # Detailed analysis
+├── sop-bench-customer-service.md   # Detailed analysis
+├── sop-bench-warehouse-inspection.md  # Detailed analysis
+├── sop-bench-tool-csv-mismatch-analysis.md  # Cross-domain tool bug analysis
+└── sop-bench-tool-agreement-audit.md  # Tool/CSV agreement rates
 
 tests/test_benchmarks/
 ├── test_mcp_bridge.py         # 10 tests
