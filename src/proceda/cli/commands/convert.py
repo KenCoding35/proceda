@@ -90,12 +90,23 @@ def convert(
             for spec in raw_tools:
                 if "toolSpec" in spec:
                     ts = spec["toolSpec"]
+                    input_schema = ts.get("inputSchema", {})
+                    if "json" in input_schema:
+                        input_schema = input_schema["json"]
                     tool_context.append(
-                        {"name": ts["name"], "description": ts.get("description", "")}
+                        {
+                            "name": ts["name"],
+                            "description": ts.get("description", ""),
+                            "parameters": input_schema,
+                        }
                     )
                 else:
                     tool_context.append(
-                        {"name": spec["name"], "description": spec.get("description", "")}
+                        {
+                            "name": spec["name"],
+                            "description": spec.get("description", ""),
+                            "parameters": spec.get("parameters", spec.get("inputSchema", {})),
+                        }
                     )
 
         # Convert

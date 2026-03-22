@@ -11,48 +11,29 @@ required_tools:
 ---
 
 ### Step 1: Verify Primary Insurance
-Access the payer portal using provider credentials to verify the patient's primary insurance coverage status, effective dates, benefit levels, copayment requirements, and network participation. Document authorization requirements.
-Use the `validateInsurance` tool to perform this check.
-Input for `validateInsurance`:
-- `insurance_card_details`: Details from the patient's current insurance card(s).
-[OPTIONAL] Collect government-issued photo identification.
+Access the payer portal using provider credentials and validate the patient's primary insurance coverage, including effective dates, benefit levels, copayment requirements, and network participation.
+Call `validateInsurance` with `patient_id`, `insurance_provider`, `policy_number`, `group_number`, `coverage_start_date`, and `insurance_type`.
+[APPROVAL REQUIRED]
 
 ### Step 2: Validate Prescription Benefits
-Query the PBM database to verify current prescription coverage, formulary compliance parameters, prior authorization requirements, specialty pharmacy protocols, and copayment structure.
-Use the `validatePrescriptionBenefits` tool to perform this validation.
-Input for `validatePrescriptionBenefits`:
-- `pharmacy_benefit_card_details`: Details from the patient's pharmacy benefit card.
-[OPTIONAL] Document prior authorization documentation if provided.
+Query the Pharmacy Benefit Management (PBM) database to confirm current prescription coverage, formulary compliance, prior authorization requirements, and copayment structure.
+Call `validatePrescriptionBenefits` with `patient_id`, `prescription_insurance_provider`, and `prescription_policy_number`.
+[APPROVAL REQUIRED]
 
-### Step 3: Evaluate Lifestyle Risk
-Calculate the patient's lifestyle risk index based on their medical history questionnaire, including smoking status, alcohol consumption frequency, and exercise patterns.
-Use the `calculateLifestyleRisk` tool to compute the aggregate lifestyle score.
-Input for `calculateLifestyleRisk`:
-- `smoking_status`: Patient's smoking risk index (e.g., Never, Former, Current).
-- `alcohol_consumption_frequency`: Patient's alcohol consumption frequency (e.g., None, Occasional, Moderate, Heavy).
-- `exercise_patterns`: Patient's exercise patterns (e.g., 5+ times, 3-4 times, 1-2 times, None).
+### Step 3: Calculate Lifestyle Risk
+Assess the patient's lifestyle factors, including smoking status, alcohol consumption frequency, and exercise patterns, to compute an aggregate lifestyle risk score.
+Call `calculateLifestyleRisk` with `patient_id`, `smoking_status`, `alcohol_consumption`, and `exercise_frequency`.
 
-### Step 4: Assess Overall Clinical Risk
-Review the patient's surgical history chronology and evaluate chronic condition severity to calculate a comorbidity interaction score and generate a weighted risk factor index. This incorporates the previously calculated lifestyle risk.
-Use the `calculateOverallRisk` tool to generate the comprehensive patient risk level.
-Input for `calculateOverallRisk`:
-- `surgical_history`: Chronological record of the patient's surgical history.
-- `chronic_conditions`: Evaluation of the patient's chronic condition severity.
-- `life_style_risk_level`: The aggregate lifestyle score obtained from Step 3.
+### Step 4: Calculate Overall Clinical Risk
+Review the patient's surgical history and chronic conditions, then combine this with the calculated lifestyle risk to generate a comprehensive overall risk index.
+Call `calculateOverallRisk` with `patient_id`, `previous_surgeries`, `chronic_conditions`, and the `life_style_risk_level` obtained from Step 3.
 
-### Step 5: Verify Pharmacy Network
-Query the preferred pharmacy database to verify pharmacy network participation and document any special handling requirements.
-Use the `verifyPharmacy` tool to confirm the pharmacy check status.
-Input for `verifyPharmacy`:
-- `preferred_pharmacy_details`: Details of the patient's preferred pharmacy.
+### Step 5: Verify Pharmacy Network Participation
+Query the preferred pharmacy database to confirm its network participation and document any special handling requirements.
+Call `verifyPharmacy` with `patient_id`, `preferred_pharmacy_name`, `preferred_pharmacy_address`, and `pharmacy_phone`.
+[APPROVAL REQUIRED]
 
-### Step 6: Complete Patient Registration
-Finalize the patient registration process by confirming the successful validation of insurance status, prescription benefits, risk levels, and pharmacy network participation. Registration will only proceed if all required validations pass successfully.
-Use the `registerPatient` tool to complete the registration.
-Input for `registerPatient`:
-- `insurance_validation_status`: The status result from Step 1.
-- `prescription_insurance_validation_status`: The status result from Step 2.
-- `life_style_risk_level`: The lifestyle risk level obtained from Step 3.
-- `overall_risk_level`: The overall risk level obtained from Step 4.
-- `pharmacy_check_status`: The status result from Step 5.
-[OPTIONAL] Process release of medical records forms if provided.
+### Step 6: Register Patient
+Complete the patient registration process by confirming all eligibility criteria, including primary insurance validation, prescription benefit validation, calculated risk levels, and preferred pharmacy network status.
+Call `registerPatient` with `patient_id`, the `insurance_validation` status from Step 1, the `prescription_insurance_validation` status from Step 2, the `life_style_risk_level` from Step 3, the `overall_risk_level` from Step 4, and the `pharmacy_check` status from Step 5.
+[APPROVAL REQUIRED]

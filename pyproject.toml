@@ -66,3 +66,8 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[dependency-groups]
+dev = [
+    "pandas>=3.0.1",
+]
+

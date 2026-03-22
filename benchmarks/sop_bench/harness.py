@@ -15,6 +15,7 @@ from typing import Any
 
 from benchmarks.sop_bench.output_extractor import extract_output
 from proceda.agent import Agent
+from proceda.config import ProcedaConfig
 from proceda.events import CollectorEventSink
 
 BENCHMARKS_DIR = Path(__file__).parent / "domains"
@@ -100,9 +101,17 @@ def save_trace(
             f.write(event.to_json() + "\n")
 
     # Copy Proceda's native event log if available
-    if run_event_log_path and run_event_log_path.exists():
-        dest = traces_dir / f"{domain}_{task_id}_{status}_proceda.jsonl"
-        shutil.copy2(run_event_log_path, dest)
+    if run_event_log_path:
+        log_path = Path(run_event_log_path)
+        if log_path.is_dir():
+            # event_log_path is the run directory; look for events.jsonl inside it
+            events_file = log_path / "events.jsonl"
+            if events_file.exists():
+                dest = traces_dir / f"{domain}_{task_id}_{status}_proceda.jsonl"
+                shutil.copy2(events_file, dest)
+        elif log_path.is_file():
+            dest = traces_dir / f"{domain}_{task_id}_{status}_proceda.jsonl"
+            shutil.copy2(log_path, dest)
 
 
 def run_evaluation(
@@ -120,6 +129,13 @@ def run_evaluation(
     if not (skill_dir / "SKILL.md").exists():
         print(f"Error: {skill_dir / 'SKILL.md'} not found. Run `proceda convert` first.")
         sys.exit(1)
+
+    # Load domain-specific config
+    config_path = skill_dir / "config.yaml"
+    if config_path.exists():
+        config = ProcedaConfig.load(str(config_path))
+    else:
+        config = ProcedaConfig.load()
 
     results = []
     total = len(tasks)
@@ -143,7 +159,7 @@ def run_evaluation(
         collector = CollectorEventSink()
         start_time = time.time()
         try:
-            agent = Agent.from_path(str(skill_dir))
+            agent = Agent.from_path(str(skill_dir), config=config)
             result = agent.run(variables=variables, event_sinks=[collector])
             execution_time = time.time() - start_time
             success = True

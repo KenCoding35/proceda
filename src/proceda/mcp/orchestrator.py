@@ -82,7 +82,7 @@ class MCPOrchestrator:
         if not self._is_tool_allowed(qualified_name):
             raise ToolAccessDeniedError(qualified_name)
 
-        tool = self._tools.get(qualified_name)
+        tool = self._tools.get(qualified_name) or self.resolve_tool(qualified_name)
         if not tool:
             raise ToolExecutionError(qualified_name, f"Tool not found: {qualified_name}")
 

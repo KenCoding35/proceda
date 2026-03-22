@@ -101,12 +101,25 @@ async def convert_sop(
     if name_hint:
         user_content = f"Suggested skill name: {name_hint}\n\n{text}"
     if tool_context:
-        tools_block = "\n".join(
-            f"  - {t['name']}: {t.get('description', '')}" for t in tool_context
-        )
+        tool_lines = []
+        for t in tool_context:
+            line = f"  - {t['name']}: {t.get('description', '')}"
+            params = t.get("parameters") or t.get("inputSchema")
+            if isinstance(params, dict) and "properties" in params:
+                param_names = list(params["properties"].keys())
+                required = params.get("required", [])
+                param_descs = []
+                for p in param_names:
+                    prop = params["properties"][p]
+                    req = " (required)" if p in required else ""
+                    param_descs.append(f"      {p}{req}: {prop.get('description', '')}")
+                line += "\n    Parameters:\n" + "\n".join(param_descs)
+            tool_lines.append(line)
+        tools_block = "\n".join(tool_lines)
         user_content += (
-            f"\n\nAvailable MCP tools (use these in step instructions and "
-            f"list relevant ones in required_tools):\n{tools_block}"
+            f"\n\nAvailable MCP tools. Use these EXACT tool names and EXACT parameter "
+            f"names in step instructions. List relevant tools in required_tools.\n"
+            f"{tools_block}"
         )
 
     messages: list[dict[str, str]] = [
