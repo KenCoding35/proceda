@@ -106,6 +106,11 @@ def _extract_from_assistant_messages(
         if result:
             return result
 
+        # Strategy 4: Prose patterns (e.g., "final_resolution_status is RESOLVED")
+        result = _extract_prose_values(content, expected_set)
+        if result:
+            return result
+
     return {}
 
 
@@ -117,6 +122,40 @@ def _extract_xml_tags(content: str, expected_set: set[str]) -> dict[str, Any]:
         match = re.search(pattern, content, re.DOTALL)
         if match:
             output[col] = match.group(1).strip()
+    return output
+
+
+def _extract_prose_values(content: str, expected_set: set[str]) -> dict[str, Any]:
+    """Extract values mentioned in prose near expected column names.
+
+    Matches patterns like:
+    - "final_resolution_status: PENDING_ACTION"
+    - "the final_resolution_status is RESOLVED"
+    - "status is PENDING_ACTION"
+    - "hazard_class: Hazard Class A"
+    """
+    output: dict[str, Any] = {}
+    for col in expected_set:
+        # Convert column name to flexible pattern (underscores → spaces or underscores)
+        col_pattern = col.replace("_", r"[\s_]")
+        # Also try matching the last segment of the column name (e.g., "status" from
+        # "final_resolution_status") to handle aliases like "ticket status"
+        col_parts = col.split("_")
+        alt_patterns = [col_pattern]
+        if len(col_parts) > 1:
+            alt_patterns.append(r"[\w\s]*" + col_parts[-1])
+        for cp in alt_patterns:
+            # Match: column_name followed by separator then value
+            pattern = (
+                rf"(?:{cp})\s*(?:is|:|=|as)\s*[\"']?"
+                rf"([\w\s\-]+?)[\"']?"
+                rf"(?:\.|,|\s*$|\s+(?:and|for|with|due|await|based))"
+            )
+            # Use findall and take the LAST match (final status is typically at the end)
+            matches = list(re.finditer(pattern, content, re.IGNORECASE))
+            if matches:
+                output[col] = matches[-1].group(1).strip()
+                break
     return output
 
 

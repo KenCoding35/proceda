@@ -11,6 +11,24 @@ from pathlib import Path
 from typing import Any
 
 
+def _sanitize_for_json(obj: Any) -> Any:
+    """Replace NaN/Inf floats with None for JSON serialization."""
+    import math
+
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj
+
+
+def _safe_json_dumps(obj: Any) -> str:
+    """JSON-serialize with NaN/Inf handling."""
+    return json.dumps(_sanitize_for_json(obj))
+
+
 def convert_bedrock_toolspecs(bedrock_specs: list[dict]) -> list[dict]:
     """Convert Bedrock-format toolspecs to MCP tool format.
 
@@ -76,11 +94,12 @@ def handle_request(
                 arguments[k] = "N/A"
         try:
             result = manager.process_tool_call(tool_name, arguments)
+            result_text = _safe_json_dumps(result)
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,
                 "result": {
-                    "content": [{"type": "text", "text": json.dumps(result)}],
+                    "content": [{"type": "text", "text": result_text}],
                 },
             }
         except Exception as e:
