@@ -49,8 +49,10 @@ human sign-off, review, verification, or approval after the step completes
 that map to MCP tool names; otherwise omit the field entirely
 - If available MCP tools are listed in the input, reference them by name in the step \
 instructions and include the relevant ones in `required_tools`. Each step should call \
-exactly one tool where applicable. Specify which arguments to pass to each tool call \
-using the variable names provided.
+exactly one tool where applicable. When specifying tool arguments, use the EXACT \
+parameter names from the tool schema — do NOT rename, abbreviate, or paraphrase them. \
+For example, if the tool parameter is called `insurance_provider`, write `insurance_provider`, \
+not `prescription_insurance_provider` or `provider_name`.
 - Output ONLY the SKILL.md content — no explanation, no wrapping, no code fences
 """
 
