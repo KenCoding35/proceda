@@ -2,22 +2,22 @@
 
 ## Summary
 
-Two tools in the `warehouse_package_inspection` domain — `validateBarcode` and `assessPackageCondition` — use deterministic modulo arithmetic on PO numbers instead of looking up values from the CSV dataset. This causes their outputs to disagree with the ground truth CSV approximately 45% of the time, creating an artificial ceiling on benchmark scores. A third tool, `updateResolutionStatus`, has a missing state transition for the no-problem case.
+Two tools in the `warehouse_package_inspection` domain — `validateBarcode` and `assessPackageCondition` — use deterministic modulo arithmetic on PO numbers instead of looking up values from the CSV dataset. This causes their outputs to disagree with the ground truth CSV approximately 45% of the time, creating an artificial ceiling on benchmark scores. A third tool, `updateResolutionStatus`, has a missing state transition for the no-problem case. Additionally, the CSV dataset itself contains internal contradictions.
 
-Every other domain in SOP-Bench (patient_intake, dangerous_goods, customer_service, etc.) uses pandas CSV lookups to return ground-truth-consistent values. The warehouse domain is the only one that uses synthetic arithmetic.
+**Per-tool agreement with CSV:**
+- `validateBarcode`: 82/150 (54.7%)
+- `assessPackageCondition`: 86/150 (57.3%)
+- Both tools simultaneously correct: 45/150 (30.0%)
 
-**Impact:** A perfect agent that follows the SOP flawlessly will score at most ~53% TSR on this domain. We verified this by running an agent that achieved 100% accuracy (80/80) on tasks where tool outputs agree with CSV, and 0% accuracy (0/70) on tasks where they disagree.
+In private benchmark runs, I found that an agent following the SOP step-by-step with 100% execution completion scored only 75/150 (50.0%) overall. All 75 failures trace to tool/CSV disagreement or CSV internal inconsistency — not to agent reasoning errors.
 
 ## Affected Files
 
-All paths relative to the repository root (`sop-bench/`).
+All paths relative to the repository root.
 
-**Primary:**
 - `src/amazon_sop_bench/benchmarks/data/warehouse_package_inspection/tools.py`
-
-**Reference (working pattern):**
-- `src/amazon_sop_bench/benchmarks/data/patient_intake/tools.py`
-- `src/amazon_sop_bench/benchmarks/data/dangerous_goods/tools.py`
+- `src/amazon_sop_bench/benchmarks/data/warehouse_package_inspection/test_set_with_outputs.csv`
+- `src/amazon_sop_bench/benchmarks/data/warehouse_package_inspection/toolspecs.json`
 
 ## Bug 1: `validateBarcode` uses `po_number % 2` instead of CSV lookup
 
@@ -36,14 +36,25 @@ This formula computes `barcode_match` from the PO number's numeric suffix modulo
 
 Concrete examples of disagreement:
 
-| PO Number | `int(po[2:]) % 2` | Tool returns | CSV says |
+| PO Number | `int(po[2:]) % 2` | Tool returns | CSV `barcode_match` |
 |-----------|-------------------|-------------|----------|
-| PO987654435 | 1 (odd) | `barcode_match=False` | `True` |
-| PO987654494 | 0 (even) | `barcode_match=True` | `False` |
-| PO987654326 | 0 (even) | `barcode_match=True` | `False` |
-| PO987654447 | 1 (odd) | `barcode_match=False` | `True` |
+| PO987654435 | 1 (odd) | `False` | `True` |
+| PO987654494 | 0 (even) | `True` | `False` |
+| PO987654326 | 0 (even) | `True` | `False` |
+| PO987654447 | 1 (odd) | `False` | `True` |
 
-When `barcode_match` is wrong, the entire task result is wrong: a false negative triggers an early exit to "Returned to Vendor" (skipping all subsequent steps), while a false positive causes the agent to proceed through steps that the ground truth expects to be skipped.
+A barcode mismatch triggers the SOP's early-exit path ("Wrong Item" → "Returned to Vendor", skip all subsequent steps), so a disagreement on this tool typically produces a completely wrong `resolution_status`.
+
+For comparison, other domains like `patient_intake` and `dangerous_goods` use pandas CSV lookups:
+
+```python
+# patient_intake/tools.py, lines 56-64 (validateInsurance)
+df = pd.read_csv(self.dataset_file_path)
+patient_data = df[df["patient_id"] == patient_id]
+# ... returns values directly from CSV row
+```
+
+The warehouse domain's `__init__` (line 29) loads `self.dataset_file_path` following the same pattern, but `validateBarcode` never reads from it.
 
 ## Bug 2: `assessPackageCondition` uses `po_number % 3` instead of CSV lookup
 
@@ -78,32 +89,28 @@ elif len(problem_type) > 0:
         raise ValueError(...)
 ```
 
-When `problem_type` is an empty list (no problems found), neither branch executes and `new_status` remains `current_status` ("Pending"). But the CSV ground truth for no-problem tasks has `resolution_status = "Resolved"`. There is no code path that produces "Resolved".
+When `problem_type` is an empty list (no problems found), neither branch executes and `new_status` remains `current_status` (typically "Pending"). There is no code path that produces "Resolved".
 
-**Affected tasks:** All tasks where barcode matches, quantities match, warehouse matches, and no damage is detected. The CSV shows 14 such tasks with `resolution_status = "Resolved"`.
+The CSV contains 22 no-problem rows (barcode matches, quantities match, warehouse matches, no damage). Of these, 14 have `resolution_status = "Resolved"` — which the tool cannot produce. The remaining 8 are internally inconsistent in the CSV itself (see next section).
 
-## Comparison with working domains
+## CSV internal contradictions
 
-Every other domain uses pandas to look up values from the CSV dataset:
+The ground truth CSV contains rows that are inconsistent with the SOP's own logic. There are 8 rows where all checks pass (barcode matches, quantities equal, warehouse matches, package undamaged, empty problem list), yet `resolution_status = "Returned to Vendor"` and `chargeable = True` with `charge_back_amt = 0.0`.
 
-**patient_intake** (`src/amazon_sop_bench/benchmarks/data/patient_intake/tools.py`):
-```python
-# Line 56-64 (validateInsurance)
-df = pd.read_csv(self.dataset_file_path)
-patient_data = df[df["patient_id"] == patient_id]
-# ... returns values from CSV row
-```
+Examples:
 
-**dangerous_goods** (`src/amazon_sop_bench/benchmarks/data/dangerous_goods/tools.py`):
-```python
-# Similar CSV lookup pattern at lines 51, 87, 123, 159
-df = pd.read_csv(self.dataset_file_path)
-product_data = df[df["product_id"] == product_id]
-```
+| PO Number | CSV Row | barcode_match | problem_type | resolution_status | chargeable |
+|-----------|---------|---------------|-------------|-------------------|------------|
+| PO987654438 | 6 | True | [] | Returned to Vendor | True |
+| PO987654461 | 8 | True | [] | Returned to Vendor | True |
+| PO987654483 | 24 | True | [] | Returned to Vendor | True |
+| PO987654421 | 30 | True | [] | Returned to Vendor | True |
+| PO987654444 | 67 | True | [] | Returned to Vendor | True |
+| PO987654393 | 111 | True | [] | Returned to Vendor | True |
+| PO987654455 | 113 | True | [] | Returned to Vendor | True |
+| PO987654427 | 147 | True | [] | Returned to Vendor | True |
 
-The warehouse domain's `WarehousePackageInspectionManager.__init__` (line 29) loads the CSV file path into `self.dataset_file_path`, matching the pattern of other domains. But unlike other domains, `validateBarcode` and `assessPackageCondition` never read from it — they compute results from PO number arithmetic instead.
-
-The other warehouse tools (`calculateQuantityVariance`, `verifyWarehouseLocation`, `calculateChargeback`, `generateProblemReport`) use input-based deterministic logic that is consistent with the CSV data, since they operate on numeric inputs (quantities, warehouse IDs) that are passed directly from the CSV row.
+Per the SOP, when all checks pass and no problems are found, the resolution should not be "Returned to Vendor." These rows appear to be data generation artifacts.
 
 ## Toolspec descriptions are misleading
 
@@ -114,29 +121,17 @@ The tool descriptions claim real image processing:
 - `validateBarcode` (line 5): *"Validates the received product barcode against the confirmed product ID **using image processing system**."*
 - `assessPackageCondition` (line 91): *"Evaluates the physical condition of received packages **using damage detection algorithm**."*
 
-The implementations do neither. The `received_product_bar_code` and `package_image_path` parameters are accepted as strings but never opened, read, or processed.
-
-## Measured impact
-
-We ran an agent (Proceda with Gemini 3 Flash Preview) that follows the SOP step-by-step with 100% execution completion rate. Results:
-
-| Subset | Tasks | Agent Accuracy |
-|--------|-------|----------------|
-| Both tools agree with CSV | 80 | **100% (80/80)** |
-| Either tool disagrees with CSV | 70 | **0% (0/70)** |
-| **Overall** | **150** | **53.3% (80/150)** |
-
-The agent makes zero reasoning errors. Every failure traces to a tool returning a value inconsistent with the CSV ground truth. The best published baseline on this domain is 69% TSR — also depressed by the same tool bugs.
+The implementations do neither. The `received_product_bar_code` and `package_image_path` parameters are accepted as strings but never opened, read, or processed. (This is consistent with how the baseline agents use the domain — they pass image paths as plain text strings and never load or encode the actual image files.)
 
 ## Suggested fix
 
-Replace the modulo arithmetic in `validateBarcode` and `assessPackageCondition` with CSV lookups matching the pattern used by all other domains:
+Replace the modulo arithmetic in `validateBarcode` and `assessPackageCondition` with CSV lookups matching the pattern used by other domains:
 
 ```python
 def validateBarcode(self, po_number, confirmed_product_id, received_product_bar_code):
     df = pd.read_csv(self.dataset_file_path)
     row = df[df["po_number"] == po_number].iloc[0]
-    barcode_match = row["barcode_match"]
+    barcode_match = bool(row["barcode_match"])
     # ... rest of logic using barcode_match from CSV
 ```
 
@@ -150,3 +145,5 @@ elif "Wrong Item" in problem_type:
 elif len(problem_type) > 0:
     # ... existing logic
 ```
+
+The 8 internally contradictory CSV rows would also need to be corrected — either by fixing `resolution_status` to "Resolved" or by adding the missing problem types that would justify "Returned to Vendor."
