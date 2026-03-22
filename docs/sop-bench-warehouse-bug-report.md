@@ -9,7 +9,7 @@ Two tools in the `warehouse_package_inspection` domain — `validateBarcode` and
 - `assessPackageCondition`: 86/150 (57.3%)
 - Both tools simultaneously correct: 45/150 (30.0%)
 
-In private benchmark runs, I found that an agent following the SOP step-by-step with 100% execution completion scored only 75/150 (50.0%) overall. All 75 failures trace to tool/CSV disagreement or CSV internal inconsistency — not to agent reasoning errors.
+In private benchmark runs, I found that an agent following the SOP step-by-step with 100% execution completion scored only 75/150 (50.0%) overall. All 75 failures trace to tool bugs or CSV inconsistencies — not to agent reasoning errors.
 
 ## Affected Files
 
@@ -121,7 +121,7 @@ The tool descriptions claim real image processing:
 - `validateBarcode` (line 5): *"Validates the received product barcode against the confirmed product ID **using image processing system**."*
 - `assessPackageCondition` (line 91): *"Evaluates the physical condition of received packages **using damage detection algorithm**."*
 
-The implementations do neither. The `received_product_bar_code` and `package_image_path` parameters are accepted as strings but never opened, read, or processed. (This is consistent with how the baseline agents use the domain — they pass image paths as plain text strings and never load or encode the actual image files.)
+The implementations do neither. The `received_product_bar_code` and `package_image_path` parameters are accepted as plain text strings but never opened, read, or processed.
 
 ## Suggested fix
 
@@ -131,7 +131,7 @@ Replace the modulo arithmetic in `validateBarcode` and `assessPackageCondition` 
 def validateBarcode(self, po_number, confirmed_product_id, received_product_bar_code):
     df = pd.read_csv(self.dataset_file_path)
     row = df[df["po_number"] == po_number].iloc[0]
-    barcode_match = bool(row["barcode_match"])
+    barcode_match = str(row["barcode_match"]).strip().lower() == "true"
     # ... rest of logic using barcode_match from CSV
 ```
 
