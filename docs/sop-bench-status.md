@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (order_fulfillment added)
+Last updated: 2026-03-22 (referral_abuse_detection_v1 added)
 
 ## Overview
 
@@ -19,13 +19,14 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Patient Intake | 66 | **97.0%** | Claude 4.1 Opus ReAct | 100% | `sop-bench-patient-intake-97pct` |
 | Dangerous Goods | 274 | **94.2%** | Claude 4 Sonnet FC | 87% | `sop-bench-dangerous-goods-94pct` |
 | Customer Service | 156 | **81.4%** | Llama 3.3 70B ReAct | 79% | `sop-bench-customer-service-81pct` |
+| Referral Abuse v1 | 200 | **95.5%** (100%‡) | Claude 3.5 v2 ReAct | 98% | — |
 | Order Fulfillment | 30 | **86.7%** (100%‡) | — | — | — |
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below).
-‡ = 100% on 26/30 tasks where tools agree with CSV; 4 failures are tool bugs.
+‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
 
 **SOTA on 2 domains** (dangerous_goods, customer_service). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
@@ -88,6 +89,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-dangerous-goods.md` — 94.2% TSR (SOTA), 16 failures analyzed
 - `docs/sop-bench-content-flagging.md` — 31% TSR, non-deterministic tools explained
 - `docs/sop-bench-customer-service.md` — 81.4% TSR (SOTA), output_fields breakthrough
+- `docs/sop-bench-referral-abuse-v1.md` — 95.5% TSR, 100% on CSV-consistent tasks
 - `docs/sop-bench-order-fulfillment.md` — 86.7% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
@@ -109,7 +111,7 @@ Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
-| Referral Abuse v1 | 200 | 3 | 98% | Boolean scoring, high baseline |
+| Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
 | Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
 | Traffic Spoofing | 200 | 6 | 86% | Threshold-based |
 | Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
@@ -130,7 +132,7 @@ From the guide's suggested order:
 
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
-| Referral Abuse v1 | 200 | 3 | 98% | Boolean scoring, high baseline |
+| Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
 | Referral Abuse v2 | 200 | 6 | 98% | Harder v1 with temporal patterns |
 | Traffic Spoofing | 200 | 6 | 86% | Threshold-based |
 | Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
@@ -182,6 +184,9 @@ benchmarks/sop_bench/
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   ├── customer_service/      # 81.4% TSR (SOTA)
+│   │   ├── SKILL.md
+│   │   └── config.yaml
+│   ├── referral_abuse_detection_v1/  # 95.5% TSR (100% on valid tasks)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   ├── order_fulfillment/        # 86.7% TSR (100% on valid tasks)
