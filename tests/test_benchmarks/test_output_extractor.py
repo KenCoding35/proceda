@@ -152,7 +152,7 @@ class TestFallbackToAssistantMessage:
         output = extract_output(events, ["insurance_validation"])
         assert output == {}
 
-    def test_tool_results_take_priority_over_assistant_message(self):
+    def test_assistant_message_takes_priority_over_tool_results(self):
         events = [
             _make_event(
                 EventType.TOOL_COMPLETED,
@@ -170,4 +170,4 @@ class TestFallbackToAssistantMessage:
             ),
         ]
         output = extract_output(events, ["insurance_validation"])
-        assert output == {"insurance_validation": "valid"}
+        assert output == {"insurance_validation": "invalid"}

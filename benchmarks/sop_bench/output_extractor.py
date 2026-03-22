@@ -25,14 +25,13 @@ def extract_output(
     Returns the first strategy that finds all expected columns, or the
     best partial result.
     """
-    output = _extract_from_tool_results(events, expected_columns)
-    if _has_all_columns(output, expected_columns):
-        return output
-
-    # Try assistant message strategies, merge with any tool results found
+    tool_output = _extract_from_tool_results(events, expected_columns)
     msg_output = _extract_from_assistant_messages(events, expected_columns)
-    # Tool results take priority, fill gaps with message extraction
-    merged = {**msg_output, **output}
+
+    # Message extraction (XML tags, final_output, etc.) reflects the agent's
+    # deliberate final answer and takes priority over tool results.  Tool results
+    # fill in any gaps not covered by message extraction.
+    merged = {**tool_output, **msg_output}
     return {k: v for k, v in merged.items() if k in set(expected_columns)}
 
 
@@ -50,6 +49,7 @@ def _extract_from_tool_results(
 
     tool_completed_events = [e for e in events if e.type == EventType.TOOL_COMPLETED]
 
+    # Use last occurrence of each key (later tool results override earlier ones)
     for event in tool_completed_events:
         result_text = event.payload.get("result", "")
         try:

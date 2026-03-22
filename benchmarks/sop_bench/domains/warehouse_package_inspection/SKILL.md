@@ -29,7 +29,7 @@ Call `assessPackageCondition` with `po_number` and `package_image_path`. If `pac
 Call `calculateChargeback` with `po_number`, the accumulated `problem_type` list, `ordered_quantity`, `received_quantity`, and `unit_cost`. Record the `chargeable` status and `charge_amount`.
 
 ### Step 6: Update Resolution Status
-Call `updateResolutionStatus` with `po_number`, the accumulated `problem_type` list, and `current_status` set to "Pending". Record the returned `resolution_status`.
+First check the accumulated `problem_type` list. If no problems were found (the list is empty), set `resolution_status` to "Resolved" and skip calling the tool. Otherwise, call `updateResolutionStatus` with `po_number`, the accumulated `problem_type` list, and `current_status` set to "Pending", and use the returned `resolution_status`.
 
 ### Step 7: Generate Problem Classification Report
 Call `generateProblemReport` with `po_number`, `vendor_id`, `vendor_name`, the accumulated `problem_type` list, `charge_amount` (from Step 5, or 0.0 if skipped due to Wrong Item), and `resolution_status`. Output the final `resolution_status` value.
