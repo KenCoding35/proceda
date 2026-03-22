@@ -1,0 +1,20 @@
+{
+  "name": "warehouse_package_inspection",
+  "output_columns": ["resolution_status"],
+  "input_columns": [
+    "po_number",
+    "vendor_id",
+    "vendor_name",
+    "confirmed_product_id",
+    "received_product_bar_code",
+    "product_name",
+    "ordered_quantity",
+    "confirmed_quantity",
+    "received_quantity",
+    "intended_warehouse_id",
+    "actual_warehouse_id",
+    "receipt_date",
+    "package_image_path",
+    "unit_cost"
+  ]
+}

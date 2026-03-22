@@ -29,9 +29,15 @@ def load_benchmark_data(domain: str, data_dir: str) -> tuple[list[dict], list[st
     """Load task data, input columns, and output columns for a domain."""
     domain_path = Path(data_dir) / domain
 
+    # Check for local metadata override in our domain directory first
+    local_metadata_path = BENCHMARKS_DIR / domain / "metadata.json"
     metadata_path = domain_path / "metadata.json"
-    with open(metadata_path) as f:
-        metadata = json.load(f)
+    if local_metadata_path.exists():
+        with open(local_metadata_path) as f:
+            metadata = json.load(f)
+    else:
+        with open(metadata_path) as f:
+            metadata = json.load(f)
     output_columns = metadata["output_columns"]
     input_columns = metadata.get("input_columns")
 
@@ -64,6 +70,7 @@ def get_task_id(task: dict, index: int) -> str:
         or task.get("video_id")
         or task.get("partner_id")
         or task.get("order_id")
+        or task.get("po_number")
         or f"task_{index}"
     )
 
