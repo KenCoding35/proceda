@@ -132,7 +132,7 @@ This is a separate issue from Issue 1: these 2 tasks are currently counted as co
 
 ## Verification
 
-Computing the SOP's scoring rules programmatically across all 200 tasks produces exactly 191 agreements and 9 disagreements — the same 9 CSV lines listed above. No other tasks are affected (the 2 tie-ambiguity tasks happen to agree with both the SOP-priority and closure-priority interpretations).
+Computing the SOP's scoring rules programmatically across all 200 tasks produces exactly 191 agreements and 9 disagreements — the same 9 CSV lines listed above. No other tasks are affected (the 2 tie-ambiguity tasks agree with the CSV and with one reasonable extension of the SOP's tiebreaker rule, but the SOP does not fully specify their outcome).
 
 ## Suggested Fix
 
