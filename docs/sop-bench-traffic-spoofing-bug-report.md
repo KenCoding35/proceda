@@ -4,10 +4,13 @@
 
 39 of 200 tasks in the `traffic_spoofing_detection` CSV have `risk_level = "Medium"` but
 `enforcement_action = "Warning Issued"`. The SOP (section 5.6) explicitly maps Medium risk
-to "Temporary Suspension" and reserves "Warning Issued" for Low risk only. No tool output or
-input field distinguishes these 39 tasks from the 50 other Medium-risk tasks that correctly
-map to "Temporary Suspension." An agent faithfully following the SOP will score at most
-161/200 (80.5%).
+to "Temporary Suspension" and reserves "Warning Issued" for Low risk only. Note that
+`risk_level` is a direct task input (`metadata.json`, line 4), not something the agent must
+infer — the benchmark hands the agent "Medium" up front. We did not find any documented
+rule, single-field threshold, or simple combination of available non-identifier signals that
+cleanly separates these 39 tasks from the 50 other Medium-risk tasks that correctly map to
+"Temporary Suspension." An agent faithfully following the SOP will score at most 161/200
+(80.5%).
 
 ## Summary
 
@@ -67,19 +70,24 @@ PARTNER189, PARTNER196, PARTNER202, PARTNER205, PARTNER206, PARTNER215, PARTNER2
 PARTNER222, PARTNER227, PARTNER232, PARTNER244, PARTNER250, PARTNER276, PARTNER277,
 PARTNER286, PARTNER288, PARTNER295, PARTNER296
 
-## No Distinguishing Feature Exists
+## No Documented Distinguishing Rule Found
 
-We checked every available input and tool output field for differences between the two
-Medium subgroups:
+We checked the available input and tool output fields for differences between the two
+Medium subgroups. We did not find any documented rule, single-field threshold, or simple
+combination of available non-identifier signals that cleanly separates them.
 
-**Categorical fields (identical distributions):**
+**Categorical fields — tool outputs are identical across both groups:**
 - `traffic_analysis_result`: both groups are 100% "SUSPICIOUS"
 - `source_verification_result`: both groups are 100% "WARNING"
 - `investigation_status`: both groups are 100% "Completed"
-- `violation_type`: both groups have the same mix of violation types (Click Funneling,
-  Spoofing Traffic, Pop Ads Masking, etc.) with overlapping proportions
+- `violation_type`: both groups contain the same violation-type categories; no violation
+  type uniquely identifies one subgroup
+- `evidence_collected`: both groups contain the same set of evidence combinations
+- `top_referral_source`: both groups contain largely the same referral sources (one extra
+  value, `twitter.com`, appears only in the Temporary Suspension group, but it is not
+  exclusive enough to serve as a separator)
 
-**Numeric fields (overlapping ranges):**
+**Numeric fields — overlapping ranges, no clean threshold:**
 
 | Field | Warning Issued (39) | Temporary Suspension (50) |
 |-------|-------------------|-------------------------|
@@ -89,8 +97,8 @@ Medium subgroups:
 | earnings_amount | [0.24, 9.83] mean=4.78 | [0.22, 9.70] mean=4.95 |
 | unattributed_clicks | [62, 1383] mean=642 | [58, 1499] mean=888 |
 
-All ranges overlap completely. There is no threshold or combination of inputs that separates
-the two groups. The split appears to have been generated independently of the data.
+All ranges overlap completely. We found no single-threshold separator and no perfect
+depth-2 decision tree over these fields that separates the two groups.
 
 ## Worked Example: PARTNER115 (CSV Line 17)
 
@@ -116,8 +124,8 @@ with evidence.
 The labeled dataset appears to have been generated with a rule that is not documented in
 the SOP. One possibility: the label generator used a secondary threshold (perhaps on
 engagement_score, unattributed_clicks, or some composite) to subdivide Medium risk into
-two enforcement tiers. But no such rule appears in the SOP text, and no combination of
-available features cleanly separates the two groups.
+two enforcement tiers. But no such rule appears in the SOP text, and we did not find a
+simple combination of available non-identifier fields that cleanly separates the two groups.
 
 This is the same class of bug found in `referral_abuse_detection_v1` (9 tasks with CSV
 labels following a closure-priority rule not stated in the SOP) and `order_fulfillment`
