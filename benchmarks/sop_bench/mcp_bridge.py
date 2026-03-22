@@ -69,6 +69,11 @@ def handle_request(
         params = request.get("params", {})
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
+        # Replace empty string values with "N/A" — SOP-Bench tools reject empty
+        # required fields even though they only use patient_id for lookup
+        for k, v in arguments.items():
+            if isinstance(v, str) and not v.strip():
+                arguments[k] = "N/A"
         try:
             result = manager.process_tool_call(tool_name, arguments)
             return {
