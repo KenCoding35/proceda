@@ -16,7 +16,7 @@ Along the way, we identified and reported 6 benchmark issues across 7 of the 14 
 
 Standard Operating Procedures are how enterprises encode critical business processes — from patient intake to KYC compliance to content moderation. Unlike informational knowledge bases (where benchmarks like [SkillsBench](https://arxiv.org/abs/2410.03647) measure factual retrieval), SOPs are *procedural*: they define a sequence of steps, tool calls, decision gates, and branching logic that must be executed faithfully.
 
-Automating SOPs with AI is a key enterprise use case. But "dump the SOP into a prompt and hope for the best" doesn't work — as SOP-Bench demonstrates, even frontier models fail when the procedure is complex. The patient intake domain, rated the *easiest* by human experts, scores **0% TSR** with both baseline agent architectures in the paper (Function Calling and ReAct with Claude 3.5 Sonnet v2).
+Automating SOPs with AI is a key enterprise use case. But "dump the SOP into a prompt and hope for the best" doesn't work — as SOP-Bench demonstrates, even frontier models fail when the procedure is complex. The patient intake domain, rated the *easiest* by human experts, scores **0% TSR** with both baseline agent architectures when using Claude 3.5 Sonnet v2 (the model shipped with the SOP-Bench evaluation code). The paper's Table 5 shows that scaling to Claude 4.1 Opus ReAct achieves 100% — but that requires a frontier model on the simplest domain.
 
 [SOP-Bench](https://arxiv.org/abs/2506.08119) is a welcome benchmark in this space. It provides 14 real-world business domains with mock tools, ground truth labels, and standardized evaluation. It tests what matters: can an AI agent reliably follow a multi-step procedure, call the right tools with the right parameters, and produce the correct output?
 
@@ -359,7 +359,7 @@ The SOP-Bench paper lists "implicit knowledge that humans learn but rarely docum
 
 The SOP-Bench paper evaluates two agent architectures: **Function Calling** (tool use in a single prompt) and **ReAct** (thought-action-observation loop). Both dump the entire SOP as raw text into a single prompt and say "follow this."
 
-This works for short procedures. It fails for complex ones. Patient intake — rated the easiest domain — requires a 6-tool dependency chain where the final tool needs outputs from all 5 previous tools as input parameters. Both baseline architectures score **0% TSR** on this domain.
+This works for short procedures. It fails for complex ones. Patient intake — rated the easiest domain — requires a 6-tool dependency chain where the final tool needs outputs from all 5 previous tools as input parameters. With Claude 3.5 Sonnet v2, both baseline architectures score **0% TSR** on this domain. Scaling to Claude 4.1 Opus achieves 100% — but requiring a frontier model for the simplest procedure highlights the brittleness of the unstructured approach.
 
 ### Proceda's Approach: Convert, Structure, Execute
 
