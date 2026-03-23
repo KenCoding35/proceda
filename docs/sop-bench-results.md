@@ -10,6 +10,19 @@ Notably, most of these results were achieved using Gemini 2.5 Flash and Gemini 3
 
 Along the way, we identified and reported 6 benchmark issues across 7 of the 14 domains, contributing to the quality of this emerging benchmark.
 
+### Terminology
+
+| Acronym | Full Name | Definition |
+|---------|-----------|------------|
+| **SOP** | Standard Operating Procedure | A documented, step-by-step business process |
+| **TSR** | Task Success Rate | Fraction of tasks where all output fields match ground truth |
+| **ECR** | Execution Completion Rate | Fraction of tasks that run to completion without crashing |
+| **C-TSR** | Conditional TSR | TSR measured only on tasks that completed (TSR / ECR) |
+| **SOTA** | State of the Art | Best published result on a benchmark |
+| **FC** | Function Calling | Agent architecture that uses tool-calling in a single LLM prompt |
+| **ReAct** | Reasoning + Acting | Agent architecture using a thought-action-observation loop |
+| **MCP** | Model Context Protocol | Open standard for connecting AI models to external tools |
+
 ---
 
 ## Why SOPs Matter

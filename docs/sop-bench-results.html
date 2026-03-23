@@ -410,6 +410,26 @@
   <p>Most results were achieved using <strong>Gemini 2.5 Flash</strong> and <strong>Gemini 3 Flash</strong> &mdash; lightweight, inexpensive models &mdash; beating baselines set by Claude 4 Opus, Claude 4.1 Opus, and Claude 4 Sonnet.</p>
 </div>
 
+<h3 style="margin-top: 2rem;">Terminology</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th style="width:5rem;">Acronym</th><th style="width:10rem;">Full Name</th><th>Definition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>SOP</strong></td><td>Standard Operating Procedure</td><td>A documented, step-by-step business process</td></tr>
+    <tr><td><strong>TSR</strong></td><td>Task Success Rate</td><td>Fraction of tasks where all output fields match ground truth</td></tr>
+    <tr><td><strong>ECR</strong></td><td>Execution Completion Rate</td><td>Fraction of tasks that run to completion without crashing</td></tr>
+    <tr><td><strong>C-TSR</strong></td><td>Conditional TSR</td><td>TSR measured only on tasks that completed (TSR / ECR)</td></tr>
+    <tr><td><strong>SOTA</strong></td><td>State of the Art</td><td>Best published result on a benchmark</td></tr>
+    <tr><td><strong>FC</strong></td><td>Function Calling</td><td>Agent architecture that uses tool-calling in a single LLM prompt</td></tr>
+    <tr><td><strong>ReAct</strong></td><td>Reasoning + Acting</td><td>Agent architecture using a thought-action-observation loop</td></tr>
+    <tr><td><strong>MCP</strong></td><td>Model Context Protocol</td><td>Open standard for connecting AI models to external tools</td></tr>
+  </tbody>
+</table>
+</div>
+
 <h2>Why SOPs Matter</h2>
 
 <p>Standard Operating Procedures are how enterprises encode critical business processes &mdash; from patient intake to KYC compliance to content moderation. Unlike informational knowledge bases (where benchmarks like <a href="https://arxiv.org/abs/2410.03647">SkillsBench</a> measure factual retrieval), SOPs are <em>procedural</em>: they define a sequence of steps, tool calls, decision gates, and branching logic that must be executed faithfully.</p>
