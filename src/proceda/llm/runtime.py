@@ -113,6 +113,9 @@ class LLMRuntime:
                     kwargs["tools"] = effective_tools
                     kwargs["tool_choice"] = "auto"
 
+                if self._config.thinking:
+                    kwargs["thinking"] = {"type": self._config.thinking}
+
                 response = await litellm.acompletion(**kwargs)
                 return self._parse_response(response)
 
