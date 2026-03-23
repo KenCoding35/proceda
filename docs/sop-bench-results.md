@@ -336,7 +336,7 @@ The two domains that required Gemini 3.1 Pro (a stronger model) are those where 
 
 For domains with clear, formulaic decision logic — even complex ones like Dangerous Goods (274 tasks, weighted scoring with imputation) — the cheap models suffice when execution is structured.
 
-The implication: **structured SOP execution substitutes for raw model capability on procedural tasks.** You don't need a $75/MTok model to follow a procedure; you need a framework that decomposes the procedure into manageable steps.
+The implication: **a purpose-built SOP execution harness substitutes for raw model capability on procedural tasks.** You don't need a $75/MTok model to follow a procedure; you need a harness that decomposes the procedure into manageable steps and drives the model through them one at a time. See [How Proceda Works](#how-proceda-works) for the architecture that makes this possible.
 
 ---
 
