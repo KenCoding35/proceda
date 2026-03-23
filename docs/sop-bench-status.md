@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (aircraft_inspection 100% SOTA, referral_abuse_v2 model comparison)
+Last updated: 2026-03-22 (referral_abuse_v2 99.0% SOTA with Gemini 3.1 Pro via OpenRouter)
 
 ## Overview
 
@@ -9,8 +9,8 @@ across 14 business domains. We run `proceda convert --tools --output-fields` to 
 each domain's SOP into a SKILL.md, then execute all tasks via the evaluation harness.
 
 **Branch:** `experiment/sop-bench`
-**Models:** Gemini 2.5 Flash (domains 1-5), Gemini 3 Flash Preview (domain 6+), Gemini 2.5 Pro (referral_abuse_v2 re-run), temperature=0.0
-**API key:** `pass soprun/GEMINI_API_KEY`
+**Models:** Gemini 2.5 Flash (domains 1-5), Gemini 3 Flash Preview (domain 6+), Gemini 3.1 Pro (referral_abuse_v2 SOTA), temperature=0.0
+**API keys:** `pass soprun/GEMINI_API_KEY` (Google AI), `pass soprun/OPENROUTER_API_KEY` (OpenRouter)
 
 ## Results Summary
 
@@ -20,9 +20,9 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Dangerous Goods | 274 | **94.2%** | Claude 4 Sonnet FC | 87% | `sop-bench-dangerous-goods-94pct` |
 | Customer Service | 156 | **81.4%** | Llama 3.3 70B ReAct | 79% | `sop-bench-customer-service-81pct` |
 | Referral Abuse v1 | 200 | **95.5%** (100%‡) | Claude 3.5 v2 ReAct | 98% | — |
-| Referral Abuse v2 (Flash) | 200 | **88.5%** | Claude 4 Opus FC | 98% | — |
+| Referral Abuse v2 (3.1 Pro) | 200 | **99.0%** | Claude 4 Opus FC | 98% | **SOTA** |
+| Referral Abuse v2 (Flash) | 200 | 88.5% | Claude 4 Opus FC | 98% | — |
 | Referral Abuse v2 (2.5 Pro) | 55* | 74.5% | Claude 4 Opus FC | 98% | — |
-| Referral Abuse v2 (3.1 Pro) | 9† | 100% | Claude 4 Opus FC | 98% | — |
 | Order Fulfillment | 30 | **86.7%** (100%‡) | — | — | — |
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
@@ -34,7 +34,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
 \* = Partial run: 55/200 tasks before daily API quota exhaustion (~1000 req/day for 2.5 Pro).
 
-**SOTA on 3 domains** (dangerous_goods, customer_service, aircraft_inspection). Near-SOTA on patient_intake.
+**SOTA on 4 domains** (dangerous_goods, customer_service, aircraft_inspection, referral_abuse_v2). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
 (mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs).
 KYB blocked by rate limiting.
@@ -96,7 +96,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-content-flagging.md` — 31% TSR, non-deterministic tools explained
 - `docs/sop-bench-customer-service.md` — 81.4% TSR (SOTA), output_fields breakthrough
 - `docs/sop-bench-referral-abuse-v1.md` — 95.5% TSR, 100% on CSV-consistent tasks
-- `docs/sop-bench-referral-abuse-v2.md` — 88.5% TSR, 23 genuine reasoning errors
+- `docs/sop-bench-referral-abuse-v2.md` — 99.0% TSR (SOTA), 2 failures analyzed
 - `docs/sop-bench-order-fulfillment.md` — 86.7% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
@@ -158,10 +158,13 @@ From the guide's suggested order:
    branching logic. The 29 remaining customer_service failures are all reasoning errors.
 
 3b. **Thinking models can be worse for structured scoring.** Gemini 2.5 Pro (thinking model)
-   achieves only 74.5% on referral_abuse_v2 vs 88.5% for Gemini 3 Flash (non-thinking).
-   The thinking mode appears to cause over-analysis on straightforward arithmetic tasks.
-   Gemini 3.1 Pro (non-thinking, preview) showed 100% accuracy on 9 tasks but has severe
-   rate limits (250 requests/day).
+   achieves only 74.5% on referral_abuse_v2 vs 88.5% for Gemini 3 Flash and 99.0% for
+   Gemini 3.1 Pro (both non-thinking). The thinking mode causes over-analysis on
+   straightforward arithmetic tasks.
+
+3c. **OpenRouter bypasses Google AI rate limits.** Gemini 3.1 Pro is limited to 250
+   requests/day on Google AI Studio (~15 tasks/day). Using OpenRouter with 20 parallel
+   workers, the full 200-task referral_abuse_v2 run completed in ~30 minutes.
 
 4. **Three domains have broken tools.** Content flagging (random.random()), warehouse
    inspection (mock logic ~55% agreement), and video annotation (20/26 `pass` stubs). The
@@ -205,7 +208,7 @@ benchmarks/sop_bench/
 │   ├── referral_abuse_detection_v1/  # 95.5% TSR (100% on valid tasks)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
-│   ├── referral_abuse_detection_v2/  # 88.5% TSR (23 reasoning errors)
+│   ├── referral_abuse_detection_v2/  # 99.0% TSR (SOTA, 2 reasoning errors)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   ├── order_fulfillment/        # 86.7% TSR (100% on valid tasks)
