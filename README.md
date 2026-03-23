@@ -10,6 +10,8 @@
 
 Turn your team's Standard Operating Procedures into executable agents — without learning a framework, building a graph, or writing glue code. Proceda is a terminal-first Python SDK where a markdown file _is_ the agent definition, human approval checkpoints are declarative, and every tool connection goes through [MCP](https://modelcontextprotocol.io/).
 
+> **SOTA on SOP-Bench** — Proceda achieves state-of-the-art on 4 of 10 runnable [SOP-Bench](https://github.com/amazon-science/SOP-Bench) domains by raw TSR (8 of 10 on SOP-consistent tasks), beating baselines set by Claude 4 Opus and Claude 4.5 Opus — often with Gemini 2.5 Flash. [Read the full report &rarr;](docs/sop-bench-results.md)
+
 ## See it work
 
 Write a procedure:
