@@ -29,7 +29,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
 | Video Classification | 196 | **83.2%** | Claude 4 Opus FC | 95% | — |
 | Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
-| Know Your Business | 90 | 42.2% | Claude 4.5 Opus ReAct | 58% | — |
+| Know Your Business | 90 | 42.2% (64.4%‡) | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below), OR partial run due to API rate limits.
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.

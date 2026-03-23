@@ -1,8 +1,10 @@
 # SOP-Bench: Know Your Business
 
-**TSR: 42.2% (38/90) | ECR: 100% | Model: Gemini 3.1 Pro via OpenRouter**
+**TSR: 42.2% (38/90) | TSR on SOP-consistent tasks: 64.4% (38/59) | ECR: 100% | Model: Gemini 3.1 Pro via OpenRouter**
 
-Best baseline: 58% (Claude 4.5 Opus ReAct). Below baseline by 16 points.
+Best baseline: 58% (Claude 4.5 Opus ReAct). Raw TSR is below baseline by 16 points, but
+31 of 52 failures are SOP/CSV disagreements where the agent correctly followed the SOP.
+On the 59 tasks where the CSV label is consistent with the SOP's rules, Proceda achieves 64.4%.
 
 ## Results
 
@@ -45,12 +47,17 @@ This is the same pattern found in referral_abuse_v1 (9 tasks), traffic_spoofing 
 
 ### Adjusted accuracy
 
-If we exclude the 31 tasks where the model correctly identified escalation triggers but the CSV expects "awaiting information":
-- **Remaining failures**: 21/90
-- **Adjusted TSR**: 76.7% (69/90)
-- **On SOP-consistent tasks**: ~69/59 is not meaningful since we can't cleanly separate them
+Excluding the 31 SOP/CSV disagreement tasks (predicted "escalate," expected "awaiting information," where the agent correctly followed the SOP's explicit escalation rules):
 
-A more precise framing: on the 56 tasks where the expected label is "approve" or "escalate" (categories with clear SOP rules), the model achieves **37/56 = 66.1%**. The remaining 19 failures on these tasks are a mix of extraction failures (10) and genuine reasoning errors (9).
+- **SOP-consistent tasks**: 59
+- **Correct on SOP-consistent tasks**: 38
+- **Adjusted TSR**: 64.4% (38/59)
+
+If the 31 disagreement tasks are counted as correct (since the agent followed the SOP):
+
+- **Generous TSR**: 76.7% (69/90)
+
+The remaining 21 failures on SOP-consistent tasks: 12 extraction failures and 9 genuine reasoning errors.
 
 ### Extraction failures (12/52 failures)
 
