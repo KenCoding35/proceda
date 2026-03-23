@@ -27,7 +27,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
-| Video Classification | 196 | **83.2%** | Claude 4 Opus FC | 95% | — |
+| Video Classification | 196 | **83.2%**† | Claude 4 Sonnet FC | 95.4% | — |
 | Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
 | Know Your Business | 90 | 42.2% (64.4%‡) | Claude 4.5 Opus ReAct | 58% | — |
 
@@ -36,8 +36,10 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 \* = Partial run: 55/200 tasks before daily API quota exhaustion (~1000 req/day for 2.5 Pro).
 
 **SOTA on 4 domains** (dangerous_goods, customer_service, aircraft_inspection, referral_abuse_v2). Near-SOTA on patient_intake.
-Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
-(mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs).
+Four domains have broken tools: content_flagging (random.random()), warehouse_inspection
+(mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs),
+video_classification (4/10 tools are `pass` stubs + 9 tasks with implicit ground truth rules not in SOP;
+paper claims 25 tools but repo has 10).
 KYB completed at 42.2% (below 58% baseline); 31/52 failures are SOP/CSV disagreements where
 the CSV expects "awaiting information" for tasks with more escalation triggers than "escalate" tasks.
 
@@ -104,7 +106,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
 - `docs/sop-bench-aircraft-inspection.md` — 98.2% TSR, 2 empty-response failures
 - `docs/sop-bench-know-your-business.md` — 42.2% TSR (64.4% on SOP-consistent tasks), 31/52 failures are SOP/CSV disagreements ([issue #8](https://github.com/amazon-science/SOP-Bench/issues/8))
-- `docs/sop-bench-video-classification.md` — 83.2% TSR, 4 stub tools cause leniency bias
+- `docs/sop-bench-video-classification.md` — 83.2% TSR, all 33 failures are benchmark bugs (stubs + implicit rules)
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
