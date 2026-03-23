@@ -450,15 +450,15 @@
     <tr><th>Domain</th><th>Model</th><th class="num">Raw TSR</th><th class="num">SOP-consistent</th><th>Best Baseline</th><th>Delta</th></tr>
   </thead>
   <tbody>
-    <tr><td>Aircraft Inspection</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>100%</strong></td><td class="num">100%</td><td>99% &mdash; Claude 4.1 Opus</td><td><span class="sota-badge">+1pt SOTA</span></td></tr>
+    <tr><td>Aircraft Inspection</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>100%</strong></td><td class="num">100%</td><td>99% &mdash; Claude 3.7 Sonnet</td><td><span class="sota-badge">+1pt SOTA</span></td></tr>
     <tr><td>Referral Abuse v2</td><td class="model">Gemini 3.1 Pro</td><td class="num"><strong>99.0%</strong></td><td class="num">99.0%</td><td>98% &mdash; Claude 4 Opus</td><td><span class="sota-badge">+1pt SOTA</span></td></tr>
     <tr><td>Patient Intake</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>97.0%</strong></td><td class="num">97.0%</td><td>100% &mdash; Claude 4.1 Opus</td><td>-3pt</td></tr>
     <tr><td>Referral Abuse v1</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>95.5%</strong></td><td class="num">100%*</td><td>98% &mdash; Claude 3.5 v2</td><td><span class="sota-badge">+2pt* SOTA</span></td></tr>
     <tr><td>Dangerous Goods</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>94.2%</strong></td><td class="num">94.2%</td><td>87% &mdash; Claude 4 Sonnet</td><td><span class="sota-badge">+7.2pt SOTA</span></td></tr>
     <tr><td>Order Fulfillment</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>86.7%</strong></td><td class="num">100%*</td><td>&mdash;</td><td><em>no baseline</em></td></tr>
-    <tr><td>Video Classification</td><td class="model">Gemini 3.1 Pro</td><td class="num"><strong>83.2%</strong></td><td class="num">~100%*</td><td>95.4% &mdash; Claude 4 Sonnet</td><td><span class="sota-badge">+4.6pt* SOTA</span></td></tr>
+    <tr><td>Video Classification</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>83.2%</strong></td><td class="num">~100%*</td><td>95% &mdash; Claude 4 Sonnet</td><td><span class="sota-badge">+5pt* SOTA</span></td></tr>
     <tr><td>Customer Service</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>81.4%</strong></td><td class="num">81.4%</td><td>79% &mdash; Llama 3.3 70B</td><td><span class="sota-badge">+2.4pt SOTA</span></td></tr>
-    <tr><td>Traffic Spoofing</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>79.5%</strong></td><td class="num">98.8%*</td><td>86% &mdash; Claude 4.1 Sonnet</td><td><span class="sota-badge">+12.8pt* SOTA</span></td></tr>
+    <tr><td>Traffic Spoofing</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>79.5%</strong></td><td class="num">98.8%*</td><td>86% &mdash; Claude 4.5 Sonnet</td><td><span class="sota-badge">+12.8pt* SOTA</span></td></tr>
     <tr><td>Know Your Business</td><td class="model">Gemini 3.1 Pro</td><td class="num"><strong>42.2%</strong></td><td class="num">64.4%*</td><td>58% &mdash; Claude 4.5 Opus</td><td><span class="sota-badge">+6.4pt* SOTA</span></td></tr>
   </tbody>
 </table>
@@ -697,13 +697,13 @@
     <li>Dangerous Goods: <strong>+7.2pt</strong> (87% &rarr; 94.2%) with Gemini 2.5 Flash</li>
     <li>Customer Service: <strong>+2.4pt</strong> (79% &rarr; 81.4%) with Gemini 2.5 Flash</li>
     <li>Referral Abuse v2: <strong>+1pt</strong> (98% &rarr; 99.0%) with Gemini 3.1 Pro</li>
-    <li>Aircraft Inspection: <strong>+1pt</strong> (99% &rarr; 100%) with Gemini 3 Flash</li>
+    <li>Aircraft Inspection: <strong>+1pt</strong> (99% &rarr; 100%) with Gemini 2.5 Flash</li>
   </ul>
   <p><strong>4 more domains SOTA on SOP-consistent tasks:</strong></p>
   <ul>
     <li>Traffic Spoofing: <strong>+12.8pt</strong> (86% &rarr; 98.8%)</li>
     <li>Know Your Business: <strong>+6.4pt</strong> (58% &rarr; 64.4%)</li>
-    <li>Video Classification: <strong>+4.6pt</strong> (95.4% &rarr; ~100%)</li>
+    <li>Video Classification: <strong>+5pt</strong> (95% &rarr; ~100%)</li>
     <li>Referral Abuse v1: <strong>+2pt</strong> (98% &rarr; 100%)</li>
   </ul>
   <p style="margin-top: 1rem; font-size: 0.92rem;"><strong>Patient Intake: 97% is arguably 100% in practice.</strong> The 2 &ldquo;failures&rdquo; (out of 66) are both the same edge case: when primary insurance returns &ldquo;invalid,&rdquo; the LLM reasons that prescription benefit validation is unnecessary and skips the tool call. This is a clinically reasonable judgment &mdash; a human would likely do the same. The benchmark scores it wrong because the tool <em>would</em> have returned &ldquo;valid&rdquo; if called. All 5 other output fields are correct in both tasks.</p>
@@ -722,14 +722,14 @@
     <tr><th>Proceda Model</th><th>Cost Tier</th><th>Domains</th><th>Baselines Beaten</th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>Gemini 2.5 Flash</strong></td><td>Lowest</td><td>Dangerous Goods, Customer Service, Patient Intake</td><td>Claude 4 Sonnet, Llama 3.3 70B</td></tr>
-    <tr><td><strong>Gemini 3 Flash</strong></td><td>Low</td><td>Aircraft Insp., Referral v1, Traffic Spoofing, Order Fulfil.</td><td>Claude 4.1 Opus, Claude 3.5 v2, Claude 4.1 Sonnet</td></tr>
-    <tr><td><strong>Gemini 3.1 Pro</strong></td><td>Medium</td><td>Referral v2, Video Classif., KYB</td><td>Claude 4 Opus, Claude 4 Sonnet, Claude 4.5 Opus</td></tr>
+    <tr><td><strong>Gemini 2.5 Flash</strong></td><td>Lowest</td><td>Dangerous Goods, Customer Service, Patient Intake, Aircraft Insp.</td><td>Claude 4 Sonnet, Llama 3.3 70B, Claude 3.7 Sonnet</td></tr>
+    <tr><td><strong>Gemini 3 Flash</strong></td><td>Low</td><td>Referral v1, Traffic Spoofing, Video Classif., Order Fulfil.</td><td>Claude 3.5 v2, Claude 4.5 Sonnet, Claude 4 Sonnet</td></tr>
+    <tr><td><strong>Gemini 3.1 Pro</strong></td><td>Medium</td><td>Referral v2, KYB</td><td>Claude 4 Opus, Claude 4.5 Opus</td></tr>
   </tbody>
 </table>
 </div>
 
-<p>The domains that required Gemini 3.1 Pro are those where the SOP explicitly asks the agent to exercise subjective judgment &mdash; <strong>Know Your Business</strong> (&ldquo;use your experience&rdquo; to distinguish typos from fraud) and <strong>Video Classification</strong> (reading prose moderator notes to classify content severity).</p>
+<p>The only domain that required Gemini 3.1 Pro where the SOP explicitly asks the agent to exercise subjective judgment is <strong>Know Your Business</strong> &mdash; the SOP says &ldquo;use your experience&rdquo; to distinguish typos from fraud, and notes that &ldquo;risk scores are not reliable.&rdquo; Referral Abuse v2 also used 3.1 Pro, but primarily because it was the model that achieved SOTA during our model comparison experiments.</p>
 
 <p>For domains with clear, formulaic decision logic &mdash; even complex ones like Dangerous Goods (274 tasks, weighted scoring with imputation) &mdash; cheap models suffice when execution is structured.</p>
 

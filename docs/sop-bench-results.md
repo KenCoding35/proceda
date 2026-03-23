@@ -41,15 +41,15 @@ Automating SOPs with AI is a key enterprise use case. But "dump the SOP into a p
 
 | Domain | Model | Raw TSR | SOP-consistent TSR | Best Baseline (Paper) | Delta |
 |--------|-------|---------|--------------------|-----------------------|-------|
-| Aircraft Inspection | Gemini 3 Flash | **100%** | 100% | 99% — Claude 4.1 Opus ReAct | **+1pt SOTA** |
+| Aircraft Inspection | Gemini 2.5 Flash | **100%** | 100% | 99% — Claude 3.7 Sonnet ReAct | **+1pt SOTA** |
 | Referral Abuse v2 | Gemini 3.1 Pro | **99.0%** | 99.0% | 98% — Claude 4 Opus FC | **+1pt SOTA** |
 | Patient Intake | Gemini 2.5 Flash | **97.0%** | 97.0% | 100% — Claude 4.1 Opus ReAct | -3pt |
 | Referral Abuse v1 | Gemini 3 Flash | **95.5%** | 100%\* | 98% — Claude 3.5 v2 ReAct | **+2pt\* SOTA** |
 | Dangerous Goods | Gemini 2.5 Flash | **94.2%** | 94.2% | 87% — Claude 4 Sonnet FC | **+7.2pt SOTA** |
 | Order Fulfillment | Gemini 3 Flash | **86.7%** | 100%\* | — | no baseline published |
-| Video Classification | Gemini 3.1 Pro | **83.2%** | ~100%\* | 95.4% — Claude 4 Sonnet FC | **+4.6pt\* SOTA** |
+| Video Classification | Gemini 3 Flash | **83.2%** | ~100%\* | 95% — Claude 4 Sonnet FC | **+5pt\* SOTA** |
 | Customer Service | Gemini 2.5 Flash | **81.4%** | 81.4% | 79% — Llama 3.3 70B ReAct | **+2.4pt SOTA** |
-| Traffic Spoofing | Gemini 3 Flash | **79.5%** | 98.8%\* | 86% — Claude 4.1 Sonnet ReAct | **+12.8pt\* SOTA** |
+| Traffic Spoofing | Gemini 3 Flash | **79.5%** | 98.8%\* | 86% — Claude 4.5 Sonnet FC | **+12.8pt\* SOTA** |
 | Know Your Business | Gemini 3.1 Pro | **42.2%** | 64.4%\* | 58% — Claude 4.5 Opus ReAct | **+6.4pt\* SOTA** |
 
 \* SOP-consistent TSR excludes tasks where the benchmark's CSV ground truth contradicts the SOP's explicit rules. See [Benchmark Quality](#benchmark-quality-contributions) for details. Baseline TSR is measured on all tasks (including the inconsistent ones), so the comparison favors the baseline.
@@ -294,11 +294,11 @@ Automating SOPs with AI is a key enterprise use case. But "dump the SOP into a p
 - Dangerous Goods: **+7.2pt** (87% → 94.2%) with Gemini 2.5 Flash
 - Customer Service: **+2.4pt** (79% → 81.4%) with Gemini 2.5 Flash
 - Referral Abuse v2: **+1pt** (98% → 99.0%) with Gemini 3.1 Pro
-- Aircraft Inspection: **+1pt** (99% → 100%) with Gemini 3 Flash
+- Aircraft Inspection: **+1pt** (99% → 100%) with Gemini 2.5 Flash
 
 **4 more domains SOTA on SOP-consistent tasks** — after excluding tasks where the benchmark's ground truth contradicts its own SOP:
 - Referral Abuse v1: **+2pt** (98% → 100%)
-- Video Classification: **+4.6pt** (95.4% → ~100%)
+- Video Classification: **+5pt** (95% → ~100%)
 - Traffic Spoofing: **+12.8pt** (86% → 98.8%)
 - Know Your Business: **+6.4pt** (58% → 64.4%)
 
@@ -314,10 +314,11 @@ One of the most striking findings is the model cost story. The SOP-Bench paper's
 
 | Baseline Model | Domains where it's best | Approx. cost tier |
 |---------------|------------------------|-------------------|
-| Claude 4.1 Opus | Aircraft Inspection, Traffic Spoofing | Highest |
 | Claude 4.5 Opus | Know Your Business | Highest |
 | Claude 4 Opus | Referral Abuse v2 | Highest |
+| Claude 4.5 Sonnet | Traffic Spoofing | High |
 | Claude 4 Sonnet | Dangerous Goods, Video Classification | High |
+| Claude 3.7 Sonnet | Aircraft Inspection | High |
 | Claude 3.5 v2 | Referral Abuse v1 | Medium |
 | Llama 3.3 70B | Customer Service | Medium |
 
@@ -325,14 +326,11 @@ Proceda beats these baselines with much lighter models:
 
 | Proceda Model | Domains | Cost tier | Baselines beaten |
 |---------------|---------|-----------|-----------------|
-| **Gemini 2.5 Flash** | Dangerous Goods, Customer Service, Patient Intake | **Lowest** | Claude 4 Sonnet, Llama 3.3 70B |
-| **Gemini 3 Flash** | Aircraft Inspection, Referral v1, Traffic Spoofing, Order Fulfillment | Low | Claude 4.1 Opus, Claude 3.5 v2, Claude 4.1 Sonnet |
-| **Gemini 3.1 Pro** | Referral v2, Video Classification, KYB | Medium | Claude 4 Opus, Claude 4 Sonnet, Claude 4.5 Opus |
+| **Gemini 2.5 Flash** | Dangerous Goods, Customer Service, Patient Intake, Aircraft Inspection | **Lowest** | Claude 4 Sonnet, Llama 3.3 70B, Claude 3.7 Sonnet |
+| **Gemini 3 Flash** | Referral v1, Traffic Spoofing, Video Classification, Order Fulfillment | Low | Claude 3.5 v2, Claude 4.5 Sonnet, Claude 4 Sonnet |
+| **Gemini 3.1 Pro** | Referral v2, KYB | Medium | Claude 4 Opus, Claude 4.5 Opus |
 
-The two domains that required Gemini 3.1 Pro (a stronger model) are those where the SOP explicitly asks the agent to exercise subjective judgment:
-
-- **Know Your Business**: The SOP says "use your experience" to distinguish typos from fraud, and notes that "risk scores are not reliable."
-- **Video Classification**: The agent must read prose moderator notes and make classification judgments about content severity.
+The only domain that required Gemini 3.1 Pro (a stronger model) where the SOP explicitly asks the agent to exercise subjective judgment is **Know Your Business** — the SOP says "use your experience" to distinguish typos from fraud, and notes that "risk scores are not reliable." Referral Abuse v2 also used 3.1 Pro, but primarily because it was the model that achieved SOTA during our model comparison experiments.
 
 For domains with clear, formulaic decision logic — even complex ones like Dangerous Goods (274 tasks, weighted scoring with imputation) — the cheap models suffice when execution is structured.
 
