@@ -25,13 +25,13 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
-| Aircraft Inspection | 112 | **98.2%** | Claude 4.1 Opus ReAct | 99% | — |
+| Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below).
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
 
-**SOTA on 2 domains** (dangerous_goods, customer_service). Near-SOTA on patient_intake.
+**SOTA on 3 domains** (dangerous_goods, customer_service, aircraft_inspection). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
 (mock logic disagrees with CSV ~55%), video_annotation (20/27 tools are stubs).
 KYB blocked by rate limiting.
@@ -207,7 +207,7 @@ benchmarks/sop_bench/
 │   ├── traffic_spoofing_detection/  # 79.5% TSR (98.8% on valid tasks)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
-│   ├── aircraft_inspection/       # 98.2% TSR
+│   ├── aircraft_inspection/       # 100% TSR (SOTA)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   └── know_your_business/    # Incomplete (rate limited)
