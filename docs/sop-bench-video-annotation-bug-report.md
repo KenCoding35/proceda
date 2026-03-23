@@ -1,12 +1,14 @@
-# Bug Report: video_annotation — 20 of 26 tools are unimplemented stubs returning None
+# Bug Report: video_annotation — 20 of 26 tool implementations are `pass`-only stubs
 
 ## Summary
 
-The `video_annotation` domain has 26 tools defined in `toolspecs.json` and `tools.py`, but only 6 are implemented. The remaining 20 methods contain only `pass` (returning `None`), and their corresponding toolspecs define zero input parameters. An agent that calls any of these 20 tools receives `None`, losing information required by the SOP to reach a correct `final status` decision.
+In the `video_annotation` domain, 20 of the 26 tool methods in `VideoProcessingManager` (`tools.py:29`) contain only `pass` and return `None`. The remaining 6 tools are properly implemented as CSV lookups and return correct data. The toolspecs (`toolspecs.json`) define complete input schemas for all 26 tools, so the issue is limited to the Python implementations.
+
+When an agent calls a stub tool it receives `null` (serialized via `json.dumps(None)`), which is marked `success=True` by the tool manager (`src/amazon_sop_bench/tools/manager.py:141`). The agent does not crash or error — it simply loses information needed for downstream decisions.
 
 ## Details
 
-### 6 implemented tools (read from CSV, return correct data)
+### 6 implemented tools (CSV lookups, return correct data)
 
 | Tool | What it returns |
 |------|----------------|
@@ -17,7 +19,7 @@ The `video_annotation` domain has 26 tools defined in `toolspecs.json` and `tool
 | `runAutomatedQC` | temporal_consistency_score, spatial_accuracy_score |
 | `performHumanValidation` | inter_annotator_score, min_reviewers |
 
-These 6 tools follow the pattern used in other well-functioning domains: they look up the `video_id` in the CSV and return the precomputed columns. They are correct and deterministic.
+These 6 tools follow the pattern used in other well-functioning domains: load the CSV, filter by `video_id`, return precomputed columns as a dict.
 
 ### 20 stub tools (method body is `pass`, return `None`)
 
@@ -31,89 +33,61 @@ adjustBitDepth              validateChannelCount        validateTemporalConsiste
 checkSpatialAccuracy        validateAnnotatorScores
 ```
 
-All 20 stubs also have **zero input parameters** in `toolspecs.json` — their `inputSchema.properties` is an empty object `{}` with no `required` array. This means the toolspecs were never completed either, not just the Python implementations.
+The toolspecs for these 20 tools are fully populated — they have input parameters, required fields, descriptions, and type constraints. For example, `validateWeatherConditions` (`toolspecs.json:311`) requires `video_id` and `weather`; `validateTemporalConsistency` (`toolspecs.json:636`) requires `video_id` and `temporal_consistency_score`. The schemas look complete. Only the Python implementations are missing.
 
-For example, `validateWeatherConditions`:
+### Why these are bugs
 
-```json
-{
-  "toolSpec": {
-    "name": "validateWeatherConditions",
-    "description": "Validates weather conditions for video suitability under specific environmental criteria.",
-    "inputSchema": {
-      "json": {
-        "type": "object",
-        "properties": {},
-        "required": []
-      }
-    }
-  }
-}
-```
+The SOP-Bench paper (v2, 2026-02-23; [ar5iv](https://ar5iv.labs.arxiv.org/html/2506.08119)) explicitly says redundant tools are intentionally added to stress tool selection — that is a valid benchmark design choice. The bug is not that extra tools exist; the bug is that these tools are shipped as `pass`-only stubs that return `None` instead of meaningful data.
 
-### Why these are bugs, not intentional design
+Evidence that the stubs are unfinished, not intentional:
 
-1. **The paper explicitly promises stable, reproducible mocks**: "To simulate API calls, each dataset includes precomputed inputs and outputs for every tool call, stored as columns. These mocks replace live APIs to enable stable, reproducible evaluation without runtime variability."
+1. **The paper promises stable, reproducible mocks**: "To simulate API calls, each dataset includes precomputed inputs and outputs for every tool call, stored as columns. These mocks replace live APIs to enable stable, reproducible evaluation without runtime variability." A `pass` body returning `None` is deterministic but semantically useless as a mock — it does not simulate an API call.
 
-2. **The benchmark's own `ADDING_BENCHMARKS.md` guide** lists non-deterministic tools as a "Common Mistake" to avoid, and specifies that tools should be deterministic, returning data from lookups. Stub tools returning `None` are less deterministic than even the `random.random()` case in `content_flagging` — at least that returns a number.
+2. **`docs/ADDING_BENCHMARKS.md:115`** says tools must be "deterministic mock implementations that return consistent results for the same inputs," and the "Common Mistakes" section (`ADDING_BENCHMARKS.md:576`) shows `random.random()` as an anti-pattern. Every example tool returns a dict with real data. No example uses `pass`.
 
-3. **The `ADDING_BENCHMARKS.md` guide** shows every example tool returning a dictionary with meaningful data. No example shows a `pass`-only stub.
+3. **The toolspecs are complete.** If the tools were meant to be non-functional distractors, there would be no reason to define input schemas with specific parameters, types, and required fields. The schemas describe tools that are meant to work.
 
-4. **These are clearly unfinished placeholders.** The implemented tools follow a consistent pattern (load CSV, filter by video_id, return columns). The stubs follow no pattern — they have docstrings describing expected behavior and return types that are never produced.
-
-5. **The toolspecs have empty parameter schemas.** Tools like `validateWeatherConditions` and `analyzeCameraStability` clearly need a `video_id` parameter to look up the relevant row, but their schemas define zero parameters. This is a second layer of incompleteness beyond the `pass` bodies.
+4. **The 6 implemented tools follow a consistent pattern** (load CSV → filter by `video_id` → return columns). The stubs have docstrings describing the same kind of return values but never produce them.
 
 ### Impact on benchmark scores
 
-The SOP references several stub tools by name or by implied functionality:
+The paper (v2) reports the following baselines for video_annotation (Claude 3.5 Sonnet v2):
 
-- Section 5.1 mentions "Environmental constraints mandate urban setting contexts with daylight illumination conditions and front-camera positioning." Tools like `validateWeatherConditions`, `validateSceneContext`, and `analyzeCameraStability` are presumably meant to provide this validation, but return `None`.
-- Section 5.3 mentions automated QC computing `spatial_accuracy_score` and `temporal_consistency_score`. While `runAutomatedQC` is implemented, `checkSpatialAccuracy` and `validateTemporalConsistency` (which sound like they should provide the same data) are stubs.
-- Section 7.1 references bit depth and channel count validation. `adjustBitDepth` and `validateChannelCount` are stubs.
+| Agent | ECR | C-TSR | TSR |
+|-------|-----|-------|-----|
+| FC | 100% | 49% | 49% |
+| ReAct | 70% | 99% | 69% |
 
-An agent following the SOP will call these tools, receive `None`, and must either:
-- **Hallucinate values** (wrong, but might accidentally match)
-- **Skip the step** (loses information needed for downstream decisions)
-- **Crash or stall** (the 30% ECR failure rate in the paper suggests this happens frequently)
+(Source: SOP-Bench paper v2, Table 4; confirmed by `docs/AGENTS.md:319`.)
 
-The paper's baseline results for video_annotation:
+When an agent calls a stub tool, it receives `null`. The framework does not raise an error (`tools/manager.py:141` returns `success=True`), and both agents serialize the result as JSON null (`function_calling.py:280`, `react.py:377`). The failure mode is not a crash — it is missing information leading to bad branching and incorrect final decisions. The agent must either skip the step (losing data) or hallucinate a value.
 
-| Agent | Model | TSR | ECR | C-TSR |
-|-------|-------|-----|-----|-------|
-| ReAct | Claude 3.5 v2 | 58% | 70% | 99% |
-| FC | Claude 3.5 v2 | 49% | 49% | 99% |
-
-The 99% C-TSR (conditional on execution completing) shows that when the agent manages to get through the pipeline without crashing on `None` returns, it almost always gets the right answer. The bottleneck is the 30-51% execution failure rate, which is directly attributable to stub tools.
+The 99% C-TSR for ReAct shows that when agents complete execution, they almost always reach the correct `final status`. The 30% ECR gap for ReAct suggests that `None` returns disrupt the agent's ability to complete the workflow in many cases, though we cannot attribute this entirely to stubs without deeper trace analysis.
 
 ### Task count mismatch
 
-The README claims 168 tasks for video_annotation. The CSV (`test_set_with_outputs.csv`) contains 125 rows.
+`README.md:296` claims 168 tasks. The packaged data contains:
 
-### Comparison with other domains
-
-For reference, the other 13 domains have:
-- **0 stub tools**: patient_intake, dangerous_goods, customer_service, referral_abuse_v1, referral_abuse_v2, traffic_spoofing_detection, aircraft_inspection, know_your_business, order_fulfillment, email_intent
-- **0 stub tools but broken mock logic**: warehouse_package_inspection (hardcoded `po_number % 3`), content_flagging (`random.random()`)
-- **5 stub tools**: video_classification (5/11 stubs, but implemented tools have correct CSV lookups)
-
-video_annotation is the most severely affected domain, with 77% of its tools (20/26) being stubs.
+- `test_set_with_outputs.csv`: 125 rows
+- `test_set_without_outputs.csv`: 42 rows
+- Total: 167 (off by 1 from the README's claim of 168)
 
 ## Suggested Fix
 
-Implement the 20 stub tools using the same CSV-lookup pattern as the 6 working tools. Each stub should:
+Implement the 20 stub methods in `tools.py` using the same CSV-lookup pattern as the 6 working tools. The toolspecs already define the correct input schemas, so no changes to `toolspecs.json` are needed.
 
-1. Accept `video_id` (and any other relevant parameters) as input — update `toolspecs.json` accordingly
+For each stub:
+1. Accept the parameters defined in the existing toolspec
 2. Look up the row in `test_set_with_outputs.csv` by `video_id`
-3. Return the relevant precomputed columns
+3. Return a dict with relevant precomputed columns
 
-For tools whose output columns don't exist in the CSV (e.g., `validateWeatherConditions` might need a `weather_valid` column), the tool should either:
-- Return the raw data from existing columns and let the agent apply the SOP logic, or
-- Have the expected output added as a new column to the CSV
+For tools whose advertised outputs cannot be derived from existing CSV columns, new columns would need to be added to the CSV.
 
-The CSV task count should also be reconciled with the README's claim of 168 tasks.
+The task count in the README should also be reconciled (167 vs 168).
 
 ## Environment
 
-- SOP-Bench commit: latest as of 2026-03-22
+- SOP-Bench commit: `156e9ecd60f42c43e4f3a12824e466afff21e9d8` (2026-02-22, initial release)
 - Domain: `video_annotation`
-- Files affected: `tools.py`, `toolspecs.json`
+- File affected: `src/amazon_sop_bench/benchmarks/data/video_annotation/tools.py`
+- Paper: SOP-Bench v2 (2026-02-23), https://ar5iv.labs.arxiv.org/html/2506.08119
