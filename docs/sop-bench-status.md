@@ -38,7 +38,8 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 **SOTA on 4 domains** (dangerous_goods, customer_service, aircraft_inspection, referral_abuse_v2). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
 (mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs).
-KYB completed at 42.2% (below 58% baseline); dominant failure is misclassifying "awaiting information" as "escalate" (31/52 failures).
+KYB completed at 42.2% (below 58% baseline); 31/52 failures are SOP/CSV disagreements where
+the CSV expects "awaiting information" for tasks with more escalation triggers than "escalate" tasks.
 
 ## What Was Done
 
@@ -169,10 +170,11 @@ All remaining domains either have broken tools or have been completed:
    tags in complete_step) disagrees with a raw tool result, the agent's deliberate answer
    is correct. Fixed in the output extractor after warehouse inspection revealed the issue.
 
-7. **SOP/CSV disagreements are a recurring pattern.** At least 3 domains have CSV ground
-   truth that contradicts the SOP's explicit rules: referral_abuse_v1 (9 tasks),
-   traffic_spoofing (39 tasks), and order_fulfillment (4 tasks). Agents that faithfully
-   follow the SOP get penalized. The paper attributes these to agent reasoning failures.
+7. **SOP/CSV disagreements are a recurring pattern.** At least 4 domains have CSV ground
+   truth that contradicts or extends the SOP's explicit rules: referral_abuse_v1 (9 tasks),
+   traffic_spoofing (39 tasks), order_fulfillment (4 tasks), and know_your_business (31
+   tasks where "awaiting information" labels have stronger escalation signals than "escalate"
+   labels). Agents that faithfully follow the SOP get penalized.
 
 ## File Map
 
