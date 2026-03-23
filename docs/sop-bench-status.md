@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-23 (KYB 42.2%, referral_abuse_v2 99.0% SOTA)
+Last updated: 2026-03-23 (video_classification 83.2%, KYB 42.2%, referral_abuse_v2 99.0% SOTA)
 
 ## Overview
 
@@ -27,6 +27,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
+| Video Classification | 196 | **83.2%** | Claude 4 Opus FC | 95% | — |
 | Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
 | Know Your Business | 90 | 42.2% | Claude 4.5 Opus ReAct | 58% | — |
 
@@ -102,6 +103,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
 - `docs/sop-bench-aircraft-inspection.md` — 98.2% TSR, 2 empty-response failures
 - `docs/sop-bench-know-your-business.md` — 42.2% TSR, 31/52 failures are escalate→awaiting info
+- `docs/sop-bench-video-classification.md` — 83.2% TSR, 4 stub tools cause leniency bias
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
@@ -111,17 +113,6 @@ Each completed domain has a detailed doc in `docs/`:
 Follow it exactly for new domains.
 
 ## What's Next
-
-### Know Your Business (blocked)
-
-KYB (90 tasks, 8 tools, 12 steps) is set up but blocked by Gemini rate limiting.
-Best baseline is 58% — hardest domain with working tools (judgment-heavy).
-
-### Recommended Next Domains
-
-| Domain | Tasks | Tools | Best Baseline | Notes |
-|--------|-------|-------|---------------|-------|
-| Video Classification | 196 | 10 | 95% | Judgment-heavy |
 
 ### Domains to Skip (broken tools)
 
@@ -140,11 +131,10 @@ Email intent bug report: `docs/sop-bench-email-intent-bug-report.md`.
 
 From the guide's suggested order:
 
-| Domain | Tasks | Tools | Best Baseline | Notes |
-|--------|-------|-------|---------------|-------|
-| Video Classification | 196 | 10 | 95% | Judgment-heavy |
-| ~~Email Intent~~ | ~~195~~ | ~~5~~ | ~~99%~~ | **Skipped** — unresolved git merge conflicts in 3 files (see bug report) |
-| ~~Video Annotation~~ | ~~125~~ | ~~26~~ | ~~58%~~ | **Skipped** — 20/26 tool implementations are `pass` stubs ([issue #6](https://github.com/amazon-science/SOP-Bench/issues/6)) |
+All remaining domains either have broken tools or have been completed:
+- ~~Video Classification~~ — **Done** (83.2% TSR)
+- ~~Email Intent~~ — **Skipped** — unresolved git merge conflicts in 3 files (see bug report)
+- ~~Video Annotation~~ — **Skipped** — 20/26 tool implementations are `pass` stubs ([issue #6](https://github.com/amazon-science/SOP-Bench/issues/6))
 
 ## Key Learnings
 
@@ -224,6 +214,9 @@ benchmarks/sop_bench/
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   ├── aircraft_inspection/       # 100% TSR (SOTA)
+│   │   ├── SKILL.md
+│   │   └── config.yaml
+│   ├── video_classification/     # 83.2% TSR (4 stub tools)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
 │   └── know_your_business/    # 42.2% TSR (below 58% baseline)
