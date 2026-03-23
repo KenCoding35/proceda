@@ -36,7 +36,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 
 **SOTA on 3 domains** (dangerous_goods, customer_service, aircraft_inspection). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
-(mock logic disagrees with CSV ~55%), video_annotation (20/27 tools are stubs).
+(mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs).
 KYB blocked by rate limiting.
 
 ## What Was Done
@@ -128,10 +128,12 @@ Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 |--------|-------|
 | Content Flagging | `random.random()` in tools |
 | Warehouse Inspection | Mock logic ~55% agreement with CSV |
-| Video Annotation | 20/26 tools are `pass` stubs with empty parameter schemas (see bug report) |
+| Video Annotation | 20/26 tool implementations are `pass` stubs ([issue #6](https://github.com/amazon-science/SOP-Bench/issues/6)) |
+| Email Intent | Unresolved git merge conflicts in `sop.txt`, `tools.py`, and `test_set_with_outputs.csv` (see bug report) |
 
 See `docs/sop-bench-tool-csv-mismatch-analysis.md` for details.
 Video annotation bug report: `docs/sop-bench-video-annotation-bug-report.md`.
+Email intent bug report: `docs/sop-bench-email-intent-bug-report.md`.
 
 ## Remaining Domains (Not Yet Attempted)
 
@@ -140,8 +142,8 @@ From the guide's suggested order:
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
-| Email Intent | 195 | 5 | 99% | SOP has git merge conflict |
-| ~~Video Annotation~~ | ~~125~~ | ~~26~~ | ~~58%~~ | **Skipped** — 20/26 tools are `pass` stubs with empty param schemas; not a valid benchmark |
+| ~~Email Intent~~ | ~~195~~ | ~~5~~ | ~~99%~~ | **Skipped** — unresolved git merge conflicts in 3 files (see bug report) |
+| ~~Video Annotation~~ | ~~125~~ | ~~26~~ | ~~58%~~ | **Skipped** — 20/26 tool implementations are `pass` stubs ([issue #6](https://github.com/amazon-science/SOP-Bench/issues/6)) |
 
 ## Key Learnings
 
@@ -162,9 +164,9 @@ From the guide's suggested order:
    rate limits (250 requests/day).
 
 4. **Three domains have broken tools.** Content flagging (random.random()), warehouse
-   inspection (mock logic ~55% agreement), and video annotation (20/27 stubs). The paper
-   doesn't acknowledge this, attributing low scores to agent reasoning failures. See the
-   tool mismatch analysis docs for details.
+   inspection (mock logic ~55% agreement), and video annotation (20/26 `pass` stubs). The
+   paper doesn't acknowledge this, attributing low scores to agent reasoning failures. See
+   the tool mismatch analysis docs for details.
 
 5. **Extraction is the bottleneck, not execution.** Every domain achieves 100% ECR. Failures
    are either extraction misses or LLM reasoning errors, never execution crashes.
