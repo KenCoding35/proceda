@@ -128,9 +128,10 @@ Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 |--------|-------|
 | Content Flagging | `random.random()` in tools |
 | Warehouse Inspection | Mock logic ~55% agreement with CSV |
-| Video Annotation | 20/27 tools are `pass` stubs |
+| Video Annotation | 20/26 tools are `pass` stubs with empty parameter schemas (see bug report) |
 
 See `docs/sop-bench-tool-csv-mismatch-analysis.md` for details.
+Video annotation bug report: `docs/sop-bench-video-annotation-bug-report.md`.
 
 ## Remaining Domains (Not Yet Attempted)
 
@@ -140,7 +141,7 @@ From the guide's suggested order:
 |--------|-------|-------|---------------|-------|
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
 | Email Intent | 195 | 5 | 99% | SOP has git merge conflict |
-| Video Annotation | 125 | 26 | 58% | 20/27 tools are stubs — broken |
+| ~~Video Annotation~~ | ~~125~~ | ~~26~~ | ~~58%~~ | **Skipped** — 20/26 tools are `pass` stubs with empty param schemas; not a valid benchmark |
 
 ## Key Learnings
 
