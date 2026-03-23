@@ -19,7 +19,7 @@ When an agent calls a stub tool it receives `null` (serialized via `json.dumps(N
 | `runAutomatedQC` | temporal_consistency_score, spatial_accuracy_score |
 | `performHumanValidation` | inter_annotator_score, min_reviewers |
 
-These 6 tools follow the pattern used in other well-functioning domains: load the CSV, filter by `video_id`, return precomputed columns as a dict.
+These 6 tools are deterministic CSV lookups keyed by the declared inputs (often including `video_id`, but several also match `video_path`, `predicted_object`, or other parameters). They follow the same pattern used in other well-functioning domains.
 
 ### 20 stub tools (method body is `pass`, return `None`)
 
@@ -62,23 +62,19 @@ The paper (v2) reports the following baselines for video_annotation (Claude 3.5 
 
 When an agent calls a stub tool, it receives `null`. The framework does not raise an error (`tools/manager.py:141` returns `success=True`), and both agents serialize the result as JSON null (`function_calling.py:280`, `react.py:377`). The failure mode is not a crash — it is missing information leading to bad branching and incorrect final decisions. The agent must either skip the step (losing data) or hallucinate a value.
 
-The 99% C-TSR for ReAct shows that when agents complete execution, they almost always reach the correct `final status`. The 30% ECR gap for ReAct suggests that `None` returns disrupt the agent's ability to complete the workflow in many cases, though we cannot attribute this entirely to stubs without deeper trace analysis.
+The 99% C-TSR for ReAct shows that when agents complete execution, they almost always reach the correct `final status`. The 30% ECR gap for ReAct suggests the stubs may contribute to execution failures, though we cannot attribute this entirely to stubs without trace-level evidence.
 
 ### Task count mismatch
 
-`README.md:296` claims 168 tasks. The packaged data contains:
-
-- `test_set_with_outputs.csv`: 125 rows
-- `test_set_without_outputs.csv`: 42 rows
-- Total: 167 (off by 1 from the README's claim of 168)
+`README.md:296` claims 168 tasks. The benchmark loader (`src/amazon_sop_bench/benchmarks/registry.py:192`) loads only `test_set_with_outputs.csv` (or `test_set.csv`), which contains 125 rows. A separate `test_set_without_outputs.csv` has 42 rows (167 total across both files), but the executable benchmark appears to load 125 tasks.
 
 ## Suggested Fix
 
 Implement the 20 stub methods in `tools.py` using the same CSV-lookup pattern as the 6 working tools. The toolspecs already define the correct input schemas, so no changes to `toolspecs.json` are needed.
 
 For each stub:
-1. Accept the parameters defined in the existing toolspec
-2. Look up the row in `test_set_with_outputs.csv` by `video_id`
+1. Accept the parameters already defined in the existing toolspec
+2. Perform a deterministic CSV lookup keyed by the declared inputs
 3. Return a dict with relevant precomputed columns
 
 For tools whose advertised outputs cannot be derived from existing CSV columns, new columns would need to be added to the CSV.
