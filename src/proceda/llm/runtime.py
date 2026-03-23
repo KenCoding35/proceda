@@ -97,7 +97,7 @@ class LLMRuntime:
         last_error: Exception | None = None
 
         effective_tools = tools
-        if tools and self._model.startswith("gemini/"):
+        if tools and (self._model.startswith("gemini/") or self._model.startswith("vertex_ai/")):
             effective_tools = self._sanitize_tools_for_gemini(tools)
 
         for attempt in range(max_retries + 1):
@@ -108,6 +108,10 @@ class LLMRuntime:
                     "temperature": self._config.temperature,
                     "max_tokens": self._config.max_tokens,
                 }
+
+                # Gemini 2.5 Pro requires thinking mode
+                if "gemini-2.5-pro" in self._model:
+                    kwargs["thinking"] = {"type": "enabled", "budget_tokens": 1024}
 
                 if effective_tools:
                     kwargs["tools"] = effective_tools

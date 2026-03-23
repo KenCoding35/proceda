@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (referral_abuse_detection_v2 added)
+Last updated: 2026-03-22 (referral_abuse_v2 model comparison: Gemini 3 Flash vs 2.5 Pro vs 3.1 Pro)
 
 ## Overview
 
@@ -9,7 +9,7 @@ across 14 business domains. We run `proceda convert --tools --output-fields` to 
 each domain's SOP into a SKILL.md, then execute all tasks via the evaluation harness.
 
 **Branch:** `experiment/sop-bench`
-**Models:** Gemini 2.5 Flash (domains 1-5), Gemini 3 Flash Preview (domain 6+), temperature=0.0
+**Models:** Gemini 2.5 Flash (domains 1-5), Gemini 3 Flash Preview (domain 6+), Gemini 2.5 Pro (referral_abuse_v2 re-run), temperature=0.0
 **API key:** `pass soprun/GEMINI_API_KEY`
 
 ## Results Summary
@@ -20,15 +20,18 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Dangerous Goods | 274 | **94.2%** | Claude 4 Sonnet FC | 87% | `sop-bench-dangerous-goods-94pct` |
 | Customer Service | 156 | **81.4%** | Llama 3.3 70B ReAct | 79% | `sop-bench-customer-service-81pct` |
 | Referral Abuse v1 | 200 | **95.5%** (100%‡) | Claude 3.5 v2 ReAct | 98% | — |
-| Referral Abuse v2 | 200 | **88.5%** | Claude 4 Opus FC | 98% | — |
+| Referral Abuse v2 (Flash) | 200 | **88.5%** | Claude 4 Opus FC | 98% | — |
+| Referral Abuse v2 (2.5 Pro) | 55* | 74.5% | Claude 4 Opus FC | 98% | — |
+| Referral Abuse v2 (3.1 Pro) | 9† | 100% | Claude 4 Opus FC | 98% | — |
 | Order Fulfillment | 30 | **86.7%** (100%‡) | — | — | — |
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
-† = Domain has broken mock tools (see tool mismatch analysis below).
+† = Domain has broken mock tools (see tool mismatch analysis below), OR partial run due to API rate limits.
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
+\* = Partial run: 55/200 tasks before daily API quota exhaustion (~1000 req/day for 2.5 Pro).
 
 **SOTA on 2 domains** (dangerous_goods, customer_service). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
@@ -150,6 +153,12 @@ From the guide's suggested order:
 
 3. **Model quality matters for reasoning.** Gemini 2.5 Flash is cheap but weaker on complex
    branching logic. The 29 remaining customer_service failures are all reasoning errors.
+
+3b. **Thinking models can be worse for structured scoring.** Gemini 2.5 Pro (thinking model)
+   achieves only 74.5% on referral_abuse_v2 vs 88.5% for Gemini 3 Flash (non-thinking).
+   The thinking mode appears to cause over-analysis on straightforward arithmetic tasks.
+   Gemini 3.1 Pro (non-thinking, preview) showed 100% accuracy on 9 tasks but has severe
+   rate limits (250 requests/day).
 
 4. **Three domains have broken tools.** Content flagging (random.random()), warehouse
    inspection (mock logic ~55% agreement), and video annotation (20/27 stubs). The paper
