@@ -13,7 +13,12 @@ from typing import IO, Any
 
 from proceda.events import RunEvent
 
-_SECRET_PATTERN = re.compile(r"(key|token|secret|password|auth|credential)", re.IGNORECASE)
+_SECRET_PATTERN = re.compile(
+    r"(api_key|secret|password|credential)"
+    r"|^(token|auth)$"
+    r"|_(token|key)$",
+    re.IGNORECASE,
+)
 
 
 def _redact_dict(data: dict[str, Any]) -> dict[str, Any]:
