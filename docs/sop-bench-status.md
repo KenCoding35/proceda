@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (referral_abuse_v2 model comparison: Gemini 3 Flash vs 2.5 Pro vs 3.1 Pro)
+Last updated: 2026-03-22 (aircraft_inspection 100% SOTA, referral_abuse_v2 model comparison)
 
 ## Overview
 
@@ -27,13 +27,14 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Warehouse Inspection | 150 | 53.3%† | Various | 69%† | — |
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
+| Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
 | Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below), OR partial run due to API rate limits.
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
 \* = Partial run: 55/200 tasks before daily API quota exhaustion (~1000 req/day for 2.5 Pro).
 
-**SOTA on 2 domains** (dangerous_goods, customer_service). Near-SOTA on patient_intake.
+**SOTA on 3 domains** (dangerous_goods, customer_service, aircraft_inspection). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
 (mock logic disagrees with CSV ~55%), video_annotation (20/27 tools are stubs).
 KYB blocked by rate limiting.
@@ -99,6 +100,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-order-fulfillment.md` — 86.7% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
+- `docs/sop-bench-aircraft-inspection.md` — 98.2% TSR, 2 empty-response failures
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
@@ -118,7 +120,6 @@ Best baseline is 58% — hardest domain with working tools (judgment-heavy).
 
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
-| Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
 
 ### Domains to Skip (broken tools)
@@ -137,7 +138,6 @@ From the guide's suggested order:
 
 | Domain | Tasks | Tools | Best Baseline | Notes |
 |--------|-------|-------|---------------|-------|
-| Aircraft Inspection | 112 | 7 | 99% | 7 output columns |
 | Video Classification | 196 | 10 | 95% | Judgment-heavy |
 | Email Intent | 195 | 5 | 99% | SOP has git merge conflict |
 | Video Annotation | 125 | 26 | 58% | 20/27 tools are stubs — broken |
@@ -216,6 +216,9 @@ benchmarks/sop_bench/
 │   ├── traffic_spoofing_detection/  # 79.5% TSR (98.8% on valid tasks)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
+│   ├── aircraft_inspection/       # 100% TSR (SOTA)
+│   │   ├── SKILL.md
+│   │   └── config.yaml
 │   └── know_your_business/    # Incomplete (rate limited)
 │       ├── SKILL.md
 │       └── config.yaml
@@ -231,6 +234,7 @@ docs/
 ├── sop-bench-order-fulfillment.md  # Detailed analysis
 ├── sop-bench-warehouse-inspection.md  # Detailed analysis
 ├── sop-bench-traffic-spoofing.md      # Detailed analysis
+├── sop-bench-aircraft-inspection.md  # Detailed analysis
 ├── sop-bench-tool-csv-mismatch-analysis.md  # Cross-domain tool bug analysis
 └── sop-bench-tool-agreement-audit.md  # Tool/CSV agreement rates
 

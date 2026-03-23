@@ -62,6 +62,7 @@ class LLMConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
     max_retries: int = 3
+    thinking: str | None = None
 
     @property
     def api_key(self) -> str | None:
@@ -126,6 +127,7 @@ class ProcedaConfig:
                 temperature=llm.get("temperature", config.llm.temperature),
                 max_tokens=llm.get("max_tokens", config.llm.max_tokens),
                 max_retries=llm.get("max_retries", config.llm.max_retries),
+                thinking=llm.get("thinking", config.llm.thinking),
             )
 
         if "apps" in data:
