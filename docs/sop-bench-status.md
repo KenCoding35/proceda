@@ -1,6 +1,6 @@
 # SOP-Bench Benchmark Status
 
-Last updated: 2026-03-22 (referral_abuse_v2 99.0% SOTA with Gemini 3.1 Pro via OpenRouter)
+Last updated: 2026-03-23 (KYB 42.2%, referral_abuse_v2 99.0% SOTA)
 
 ## Overview
 
@@ -28,7 +28,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 | Content Flagging | 168 | 31.0%† | DeepSeek R1 ReAct | 60%† | `sop-bench-content-flagging-31pct` |
 | Traffic Spoofing | 200 | **79.5%** (98.8%‡) | Claude 4.1 Sonnet ReAct | 86% | — |
 | Aircraft Inspection | 112 | **100%** | Claude 4.1 Opus ReAct | 99% | **SOTA** |
-| Know Your Business | 90 | **incomplete** | Claude 4.5 Opus ReAct | 58% | — |
+| Know Your Business | 90 | 42.2% | Claude 4.5 Opus ReAct | 58% | — |
 
 † = Domain has broken mock tools (see tool mismatch analysis below), OR partial run due to API rate limits.
 ‡ = 100% on tasks where tools/CSV agree; remaining failures are tool bugs or CSV errors.
@@ -37,7 +37,7 @@ each domain's SOP into a SKILL.md, then execute all tasks via the evaluation har
 **SOTA on 4 domains** (dangerous_goods, customer_service, aircraft_inspection, referral_abuse_v2). Near-SOTA on patient_intake.
 Three domains have broken tools: content_flagging (random.random()), warehouse_inspection
 (mock logic disagrees with CSV ~55%), video_annotation (20/26 tool implementations are `pass` stubs).
-KYB blocked by rate limiting.
+KYB completed at 42.2% (below 58% baseline); dominant failure is misclassifying "awaiting information" as "escalate" (31/52 failures).
 
 ## What Was Done
 
@@ -101,6 +101,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
 - `docs/sop-bench-aircraft-inspection.md` — 98.2% TSR, 2 empty-response failures
+- `docs/sop-bench-know-your-business.md` — 42.2% TSR, 31/52 failures are escalate→awaiting info
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
 
@@ -225,7 +226,7 @@ benchmarks/sop_bench/
 │   ├── aircraft_inspection/       # 100% TSR (SOTA)
 │   │   ├── SKILL.md
 │   │   └── config.yaml
-│   └── know_your_business/    # Incomplete (rate limited)
+│   └── know_your_business/    # 42.2% TSR (below 58% baseline)
 │       ├── SKILL.md
 │       └── config.yaml
 └── results/                   # Gitignored - traces, reports, JSON results
