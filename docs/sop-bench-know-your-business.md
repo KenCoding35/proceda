@@ -45,6 +45,10 @@ The SOP's Step 1 does say to set "awaiting information" for profile irregulariti
 
 This is the same pattern found in referral_abuse_v1 (9 tasks), traffic_spoofing (39 tasks), and order_fulfillment (4 tasks): **the CSV ground truth follows a labeling rule that contradicts or extends the written SOP.** An agent that follows the SOP faithfully gets penalized.
 
+The SOP-Bench paper lists "implicit knowledge that humans learn but rarely document" as a benchmark challenge. However, the agent evaluates each task in isolation with no access to ground truth labels — there is no mechanism for it to learn an unstated priority rule from the data. The implicit knowledge framing only works if the knowledge is discoverable from the SOP text or general domain conventions. "Profile irregularities override sanctions matches" is neither — it's an arbitrary labeling priority that contradicts the SOP's own Step 12.
+
+Filed as [issue #8](https://github.com/amazon-science/SOP-Bench/issues/8).
+
 ### Adjusted accuracy
 
 Excluding the 31 SOP/CSV disagreement tasks (predicted "escalate," expected "awaiting information," where the agent correctly followed the SOP's explicit escalation rules):

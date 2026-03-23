@@ -103,7 +103,7 @@ Each completed domain has a detailed doc in `docs/`:
 - `docs/sop-bench-warehouse-inspection.md` — 53.3% TSR, 100% on tool-matching tasks
 - `docs/sop-bench-traffic-spoofing.md` — 79.5% TSR, 98.8% on SOP-consistent tasks
 - `docs/sop-bench-aircraft-inspection.md` — 98.2% TSR, 2 empty-response failures
-- `docs/sop-bench-know-your-business.md` — 42.2% TSR, 31/52 failures are escalate→awaiting info
+- `docs/sop-bench-know-your-business.md` — 42.2% TSR (64.4% on SOP-consistent tasks), 31/52 failures are SOP/CSV disagreements ([issue #8](https://github.com/amazon-science/SOP-Bench/issues/8))
 - `docs/sop-bench-video-classification.md` — 83.2% TSR, 4 stub tools cause leniency bias
 - `docs/sop-bench-tool-csv-mismatch-analysis.md` — Cross-domain tool bug analysis
 - `docs/sop-bench-tool-agreement-audit.md` — Tool/CSV agreement rates for all domains
