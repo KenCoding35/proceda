@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Proceda Was Designed and Built — Enchiridion Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --bg-warm: #0d0e13;
+    --surface: #131419;
+    --surface-hover: #1a1b22;
+    --surface-border: rgba(240, 237, 232, 0.06);
+    --surface-border-hover: rgba(0, 212, 161, 0.25);
+    --text: #f0ede8;
+    --text-secondary: #b0ada6;
+    --text-muted: #6a6875;
+    --text-faint: #5e5d68;
+    --jade: #00D4A1;
+    --jade-dim: rgba(0, 212, 161, 0.12);
+    --jade-glow: rgba(0, 212, 161, 0.08);
+    --amber: #E8A94A;
+    --amber-dim: rgba(232, 169, 74, 0.12);
+    --red: #E85A5A;
+    --red-dim: rgba(232, 90, 90, 0.10);
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Crimson Pro', Georgia, serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 17px; scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text);
+    line-height: 1.75;
+    font-weight: 300;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection { background: var(--jade); color: var(--bg); }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.018;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .site-nav {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--surface-border);
+    background: rgba(10, 11, 15, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .site-nav-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .site-nav a {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .site-nav a:hover { color: var(--jade); }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  .hero {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--surface-border);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    font-weight: 500;
+    font-optical-sizing: auto;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .byline {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  .byline a { color: var(--jade); text-decoration: none; font-weight: 500; }
+  .byline a:hover { color: var(--text); }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-top: 3.5rem;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 2.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  p { margin-bottom: 1.1rem; }
+  strong { font-weight: 600; color: var(--text); }
+  a { color: var(--jade); text-decoration: none; }
+  a:hover { color: var(--text); }
+  em { color: var(--text-secondary); }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--surface-border);
+    margin: 3rem 0;
+  }
+
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1.1rem; }
+  li { margin-bottom: 0.5rem; color: var(--text-secondary); }
+  li strong { color: var(--text); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--surface);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--jade);
+    border: 1px solid var(--surface-border);
+  }
+
+  pre {
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+    border: none;
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--surface-border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  thead { background: var(--surface); }
+
+  th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  td {
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid rgba(240, 237, 232, 0.03);
+    vertical-align: top;
+    color: var(--text-secondary);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(240, 237, 232, 0.02); }
+  td code { font-size: 0.78em; }
+  td.date {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* Critique callouts — red/amber for issues found */
+  .critique {
+    border-left: 3px solid var(--amber);
+    padding: 0.85rem 1.25rem;
+    background: var(--amber-dim);
+    margin: 0.75rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .critique p { margin-bottom: 0; font-size: 0.92rem; }
+  .critique strong { color: var(--amber); }
+
+  /* Resolution callouts — jade for what changed */
+  .resolution {
+    border-left: 3px solid var(--jade);
+    padding: 0.85rem 1.25rem;
+    background: var(--jade-dim);
+    margin: 0.75rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .resolution p { margin-bottom: 0; font-size: 0.92rem; }
+  .resolution strong { color: var(--jade); }
+
+  /* Decision blocks */
+  .decision {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+
+  .decision p { margin-bottom: 0.5rem; font-size: 0.92rem; }
+  .decision p:last-child { margin-bottom: 0; }
+  .decision .label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--jade);
+    margin-bottom: 0.4rem;
+  }
+
+  /* Phase list */
+  .phases {
+    margin: 1rem 0 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .phases li {
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-left: 2px solid var(--surface-border);
+    margin-bottom: 0;
+    position: relative;
+  }
+
+  .phases li::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 0.85rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--jade);
+  }
+
+  .phases li:last-child { border-left-color: transparent; }
+
+  /* Section drop cap */
+  .drop-cap::first-letter {
+    font-family: var(--font-display);
+    float: left;
+    font-size: 3.4rem;
+    line-height: 0.8;
+    padding-right: 0.5rem;
+    padding-top: 0.15rem;
+    color: var(--jade);
+    font-weight: 400;
+  }
+
+  /* Tension items */
+  .tension {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.85rem 1.15rem;
+    margin: 0.75rem 0;
+  }
+
+  .tension p { margin-bottom: 0; font-size: 0.92rem; }
+  .tension .tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display: inline-block;
+    background: var(--amber-dim);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Outcome list */
+  .outcomes {
+    margin: 1.25rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .outcomes li {
+    padding: 0.5rem 0;
+    padding-left: 1.75rem;
+    position: relative;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .outcomes li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85rem;
+    width: 10px;
+    height: 2px;
+    background: var(--jade);
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--surface-border);
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .footer a { color: var(--jade); }
+
+  @media (max-width: 640px) {
+    html { font-size: 16px; }
+    h1 { font-size: 1.8rem; }
+    .container { padding: 2rem 1rem 4rem; }
+    .drop-cap::first-letter { font-size: 2.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a href="https://enchiridionlabs.online">&larr; Enchiridion Labs</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>How Proceda Was Designed and Built</h1>
+    <p class="subtitle">The design back-and-forth between a solo founder and Claude Code that produced a SOTA SOP-execution engine.</p>
+    <p class="byline">By <a href="https://vivekhaldar.com">Vivek Haldar</a> / <a href="https://enchiridionlabs.online">Enchiridion Labs</a> &middot; March 2026</p>
+  </div>
+
+  <!-- ============================================ -->
+  <h2>Origin: SkillRunner (January 2026)</h2>
+
+  <p class="drop-cap">Proceda did not begin as Proceda. It began as <strong>SkillRunner</strong> &mdash; a full-stack web application (FastAPI + React) for turning enterprise SOPs into executable workflows with LLM reasoning and human oversight.</p>
+
+  <p>The first commit landed on <strong>January 16, 2026</strong>. Vivek Haldar, recently departed from a VP of Engineering role, was bootstrapping an AI startup as a solo founder. The thesis: enterprise organizations maintain vast SOP libraries as static documents &mdash; what if those documents could execute themselves?</p>
+
+  <p>The initial product vision was a two-pane web UI: skill definition on the left, execution chat on the right, with inline app UIs rendered via MCP. The LLM would step through an SOP written in markdown, calling tools and pausing for human approval at marked checkpoints.</p>
+
+  <p>By January 22, a working prototype existed: skill parser, config system, HTTP API, WebSocket coordination, LLM runtime (LiteLLM), MCP clients, session management, and a React frontend.</p>
+
+  <!-- ============================================ -->
+  <h2>The Design Critique Loop</h2>
+
+  <p>What makes the SkillRunner design process distinctive is the structured critique loop. Rather than designing in isolation and implementing, the product spec went through <strong>three rounds of staff-engineer-level design critiques</strong> with Claude Code, each escalating in severity and specificity.</p>
+
+  <h3>Critique Round 1: Structural Gaps</h3>
+
+  <p>The first critique identified critical issues that would have caused production failures:</p>
+
+  <div class="critique">
+    <p><strong>State ownership contradiction.</strong> The design simultaneously claimed &ldquo;state in LLM context&rdquo; as canonical (Section 3.5) while keeping authoritative state in the backend SessionManager (Sections 5.4, 6.1). These are mutually exclusive &mdash; if the LLM context drifts, which source of truth wins?</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Approval handling was underspecified.</strong> The <code>[APPROVAL REQUIRED]</code> marker only triggered post-step approval. But post-step means the LLM has already called tools &mdash; including potentially irreversible ones (delete, submit, pay).</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Path traversal vulnerability.</strong> The skill loading API accepted user-specified paths with no normalization, a classic local file read risk.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>No tool access control.</strong> All discovered MCP tools were available to all skills. The critique called this &ldquo;a security and policy risk for enterprise.&rdquo;</p>
+  </div>
+
+  <h3>Critique Round 2: Security and Correctness</h3>
+
+  <p>The second round escalated several issues to blockers:</p>
+
+  <div class="critique">
+    <p><strong>Pre-step approval was missing.</strong> &ldquo;Post-step approval only is unsafe for irreversible actions. You need pre-step approval markers or a &lsquo;preflight&rsquo; approval mode.&rdquo; This directly led to the <code>[PRE-APPROVAL REQUIRED]</code> marker in the final design &mdash; a feature that became architecturally load-bearing for production SOPs.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Persistence scope was internally inconsistent.</strong> Section 2.2 declared &ldquo;Non-Goal: persistent state across sessions,&rdquo; but Section 5.4 and Phase 6 assumed a SessionStore exists. The critique demanded a decision.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>iFrame sandbox was weaker than claimed.</strong> The <code>srcDoc</code> + <code>allow-scripts</code> approach enabled XSS. Nonce validation on postMessage offered no protection because injected scripts could read the nonce from the HTML.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Context budget was hand-wavy.</strong> The design acknowledged the problem (&ldquo;future summarization&rdquo;) but offered no concrete strategy. &ldquo;For long skills, this will blow the context budget.&rdquo;</p>
+  </div>
+
+  <h3>Critique Round 3: Schema Mismatches</h3>
+
+  <p>The third round caught implementation-level gaps that would have caused runtime errors:</p>
+
+  <div class="critique">
+    <p><strong>Missing Session fields.</strong> The Executor referenced <code>pending_clarification</code> and <code>pre_approval_granted</code> &mdash; fields that did not exist in the Session model.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Tool allowlist defaults were dangerous.</strong> Section 8.6 defaulted to &ldquo;all tools if <code>required_tools</code> is absent.&rdquo; The critique called this unsafe for enterprise.</p>
+  </div>
+
+  <div class="critique">
+    <p><strong>Skill parser brittleness.</strong> The <code>### Step N</code> regex would misparse real-world SOPs with non-standard headings, nested headings, or tables.</p>
+  </div>
+
+  <h3>What the Critiques Changed</h3>
+
+  <p>The critique loop&rsquo;s impact is visible in the implemented code. The code review conducted in February 2026 (grading the SkillRunner codebase at B+) specifically praised design elements that trace directly to critique feedback:</p>
+
+  <div class="resolution">
+    <p><strong>Deny-by-default tool access.</strong> Skills must explicitly declare <code>required_tools</code> in frontmatter. If absent, no app tools are available. The global denylist overrides skill-level allowlists. The code review called this &ldquo;genuinely strong.&rdquo;</p>
+  </div>
+
+  <div class="resolution">
+    <p><strong>Layered error recovery.</strong> Categorized errors with <code>recoverable</code>, <code>user_message</code>, and <code>details</code> metadata. Error recovery flow wired through the full stack. The code review called the error system (~950 lines) &ldquo;unusually well-structured.&rdquo;</p>
+  </div>
+
+  <div class="resolution">
+    <p><strong>MCP subprocess lifecycle.</strong> Proper escalation on cleanup: close stdin &rarr; wait(2s) &rarr; terminate &rarr; wait(1s) &rarr; kill.</p>
+  </div>
+
+  <div class="resolution">
+    <p><strong>Context trimming.</strong> Token counting with tiktoken for OpenAI/Claude, character-based fallback for other providers. History truncation preserves critical messages (approval records, step boundaries, clarification exchanges).</p>
+  </div>
+
+  <p>Some critiqued issues remained partially resolved. The state ownership question was addressed pragmatically (backend session state wins, LLM context is managed) rather than architecturally. The iFrame security concern (CSP with <code>unsafe-inline</code> is cosmetic) was acknowledged but deferred, with the trade-off logged. The approval pre/post ambiguity was resolved in implementation but never formally updated in the design doc.</p>
+
+  <!-- ============================================ -->
+  <h2>The Pivot: Extracting Proceda (March 5, 2026)</h2>
+
+  <p>By early March, SkillRunner was a working product: 1,330+ backend tests, 544+ frontend tests, deployed to staging and production on Cloud Run. But a strategic question emerged: <strong>the execution kernel was too valuable to be trapped inside a web application.</strong></p>
+
+  <p>The SkillRunner execution engine &mdash; skill parser, LLM runtime, executor, MCP integration, event system &mdash; could operate independently of the web UI. Three observations drove the extraction:</p>
+
+  <ol>
+    <li><strong>SDK vs. web app.</strong> The runtime should be embeddable as a Python library, not just consumed via WebSocket from a browser.</li>
+    <li><strong>Open source potential.</strong> The core engine could be a standalone open-source project, separate from the commercial hosting platform. The OSS product must be complete and exciting on its own &mdash; not artificially crippled.</li>
+    <li><strong>Terminal-first use case.</strong> Local development, scripting, benchmarking, and CLI usage needed a runtime that worked without a browser.</li>
+  </ol>
+
+  <p>On March 5, 2026, the Proceda repository was seeded with product spec and technical design documents. Within two days, two competing implementations were produced:</p>
+
+  <ul>
+    <li><strong>Implementation A:</strong> Core runtime, CLI, and tests.</li>
+    <li><strong>Implementation B:</strong> Full v1 with CLI, TUI, runtime, MCP, and 172 tests.</li>
+  </ul>
+
+  <p>A detailed comparative analysis (<code>67ec104</code>) evaluated both. Implementation B won &mdash; more complete, better tested, and closer to the vision.</p>
+
+  <h3>Key Architectural Decisions in the Extraction</h3>
+
+  <p>The extraction was not a copy-paste. Several deliberate design pivots were made:</p>
+
+  <div class="decision">
+    <div class="label">Decision</div>
+    <p><strong>Event stream over WebSocket coordination.</strong> SkillRunner used WebSocket + REST for frontend coordination. Proceda replaced this with in-process event streams. The rationale: &ldquo;CLI and TUI need local event subscriptions, not socket transport. Events are a better primitive for replay, embedding, and later web adapters.&rdquo;</p>
+  </div>
+
+  <div class="decision">
+    <div class="label">Decision</div>
+    <p><strong>Terminal-only v1.</strong> No HTML widget rendering. Browser UI is part of the hosted value proposition (SkillRunner&rsquo;s commercial moat). Terminal focus is strategically cleaner for open source.</p>
+  </div>
+
+  <div class="decision">
+    <div class="label">Decision</div>
+    <p><strong>Event log in v1, session resume in v2.</strong> Full resume requires tight snapshot semantics. Event replay &mdash; valuable for debugging, demos, and benchmarking &mdash; was achievable in v1. This scope cut kept the initial release tractable.</p>
+  </div>
+
+  <div class="decision">
+    <div class="label">Decision</div>
+    <p><strong>Preserve SKILL.md format.</strong> The critique rounds had questioned the markdown parser&rsquo;s brittleness, but the format was already implemented, understood, and matched the product thesis (procedure-first, not graph-first). The extraction reaffirmed it.</p>
+  </div>
+
+  <div class="decision">
+    <div class="label">Decision</div>
+    <p><strong>One package, not many.</strong> A single <code>proceda</code> package rather than splitting into <code>proceda-core</code>, <code>proceda-mcp</code>, etc. Stronger product story, lower cognitive overhead. The alternative (internal package sprawl) was explicitly rejected.</p>
+  </div>
+
+  <p>The package was initially named <code>skillrunner</code>, then renamed to <code>proceda</code> on the same day (<code>21df683</code>).</p>
+
+  <!-- ============================================ -->
+  <h2>The Boomerang: Proceda Back Into SkillRunner</h2>
+
+  <p>Once Proceda was stabilized as an independent SDK, SkillRunner adopted it as its core engine dependency. This was executed in 10 phases over a week:</p>
+
+  <ul class="phases">
+    <li><strong>Phases 0&ndash;1:</strong> Add Proceda as path dependency. Replace skill models and parser with Proceda&rsquo;s versions. Delete SkillRunner&rsquo;s copies. Migrate from 0-based to 1-based step indices.</li>
+    <li><strong>Phase 2:</strong> Replace SessionStatus enum with Proceda&rsquo;s RunStatus.</li>
+    <li><strong>Phase 3:</strong> Replace LLM runtime with Proceda&rsquo;s utilities (thinking tag parsing, tool result formatting).</li>
+    <li><strong>Phase 4:</strong> Keep MCP client in SkillRunner &mdash; Proceda&rsquo;s version lacked UI resource extraction features needed for the web frontend.</li>
+    <li><strong>Phases 5&ndash;7:</strong> Replace context manager and summary generator. Build an event bridge to translate Proceda RunEvents into SkillRunner ExecutionEvents.</li>
+    <li><strong>Phases 8&ndash;9:</strong> Update remaining modules. Fix frontend step indices (0-based &rarr; 1-based).</li>
+    <li><strong>Phase 10:</strong> Full test suite verification &mdash; 1,361 backend + 544 frontend tests passing.</li>
+  </ul>
+
+  <p>The result: SkillRunner became a thin web hosting layer over Proceda&rsquo;s execution engine. Proceda owns the runtime. SkillRunner owns the multi-tenant web experience.</p>
+
+  <!-- ============================================ -->
+  <h2>The Working Style: Solo Founder + Claude Code</h2>
+
+  <p>The development pattern visible in the commit history reveals a distinctive working style:</p>
+
+  <h3>Design-first, then implement</h3>
+
+  <p>Every major feature started with a design document or product spec, not code. The SOP converter had a design doc (<code>12fbcc0</code>) before a line of implementation. The Proceda extraction had a full technical design with extraction maps and implementation phases. Even the SOP-Bench benchmark run had a status document that was updated continuously.</p>
+
+  <h3>Structured critique as quality gate</h3>
+
+  <p>Rather than reviewing code after the fact, the design critique loop front-loaded quality. Three rounds of critique on the product spec caught state ownership contradictions, security gaps, and schema mismatches before they became bugs. This is unusual for a solo founder project &mdash; most solo projects skip design review entirely.</p>
+
+  <h3>Competing implementations with comparative analysis</h3>
+
+  <p>For the Proceda extraction, two complete implementations were produced and evaluated side-by-side. The analysis (<code>67ec104</code>) examined code quality, test coverage, architectural alignment, and completeness before picking a winner. This is a deliberate strategy: let the AI produce multiple approaches, then evaluate rather than iterate on one.</p>
+
+  <h3>Rapid iteration with continuous documentation</h3>
+
+  <p>The git history shows documentation commits interspersed with code commits, not batched at the end. Design docs were updated as decisions changed. CLAUDE.md (the AI collaborator guide) was maintained as a living document, updated when new patterns emerged.</p>
+
+  <h3>Claude Code as staff engineer, not code monkey</h3>
+
+  <p>The critique loop, comparative analysis, and code review suggest Claude Code was used as a design partner rather than a typing accelerator. The design critiques read like genuine staff-engineer reviews &mdash; they identify contradictions, escalate severity, demand decisions, and sometimes disagree with the proposed approach. The code review grades the codebase (B+) and identifies specific bugs (litellm race condition, session state mutation) alongside architectural strengths.</p>
+
+  <!-- ============================================ -->
+  <h2>Timeline Summary</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Milestone</th></tr></thead>
+      <tbody>
+        <tr><td class="date">Jan 16</td><td>SkillRunner MVP begins &mdash; product spec, initial implementation</td></tr>
+        <tr><td class="date">Jan 16&ndash;22</td><td>Design critique rounds 1&ndash;3 shape architecture</td></tr>
+        <tr><td class="date">Jan 22 &ndash; Feb 11</td><td>Full-stack implementation across 42 tasks</td></tr>
+        <tr><td class="date">Feb 11&ndash;19</td><td>Production features: auto-save, Cloud Run deployment, PDF converter</td></tr>
+        <tr><td class="date">Feb 26</td><td>Code review: B+ grade, 1,330+ tests, security and concurrency issues flagged</td></tr>
+        <tr><td class="date">Mar 5</td><td>Proceda repo seeded &mdash; extraction begins</td></tr>
+        <tr><td class="date">Mar 5&ndash;6</td><td>Two competing implementations; Implementation B wins with 172 tests</td></tr>
+        <tr><td class="date">Mar 5</td><td>Package renamed from <code>skillrunner</code> to <code>proceda</code></td></tr>
+        <tr><td class="date">Mar 6&ndash;9</td><td>Hardening: pre-commit hooks, docs, bug fixes, OSS prep</td></tr>
+        <tr><td class="date">Mar 8&ndash;9</td><td>Open-source release: license, packaging, README</td></tr>
+        <tr><td class="date">Mar 9</td><td>SOP converter feature added (LLM-based SKILL.md generation)</td></tr>
+        <tr><td class="date">Mar 9&ndash;16</td><td>SkillRunner adopts Proceda as engine (10-phase migration)</td></tr>
+        <tr><td class="date">Mar 10&ndash;15</td><td><code>output_fields</code> feature &mdash; <em>Customer Service</em> jumps from 30% to 81% TSR</td></tr>
+        <tr><td class="date">Mar 15&ndash;24</td><td>SOP-Bench benchmark: 10 domains run, SOTA on 4, 6 benchmark bugs found</td></tr>
+        <tr><td class="date">Mar 23&ndash;24</td><td>Design analysis and results reports published</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================ -->
+  <h2>Unresolved Tensions</h2>
+
+  <p>Several design debates from the critique rounds remain partially resolved:</p>
+
+  <div class="tension">
+    <span class="tag">Unresolved</span>
+    <p><strong>State ownership.</strong> The backend session state is authoritative in practice, but full session resume (pause at step 3, close everything, resume days later) remains a v2 feature.</p>
+  </div>
+
+  <div class="tension">
+    <span class="tag">Undocumented</span>
+    <p><strong>Approval semantics.</strong> Pre-step and post-step approval markers both exist and work, but the design never formally specified which to use when. In practice, <code>[PRE-APPROVAL REQUIRED]</code> is for irreversible actions and <code>[APPROVAL REQUIRED]</code> is for review-after-execution.</p>
+  </div>
+
+  <div class="tension">
+    <span class="tag">Deferred</span>
+    <p><strong>iFrame security.</strong> CSP with <code>unsafe-inline</code> is acknowledged as cosmetic for the SkillRunner web frontend. The threat model (are MCP apps trusted first-party or untrusted third-party?) was debated but never formally decided.</p>
+  </div>
+
+  <div class="tension">
+    <span class="tag">Partially Solved</span>
+    <p><strong>Skill parser brittleness.</strong> The <code>### Step N</code> format works for machine-generated SKILL.md files (via the converter) but struggles with hand-authored SOPs that use non-standard heading formats.</p>
+  </div>
+
+  <!-- ============================================ -->
+  <h2>What the Process Produced</h2>
+
+  <p>From a standing start on January 16 to SOTA benchmark results on March 24 &mdash; roughly 10 weeks &mdash; the process produced:</p>
+
+  <ul class="outcomes">
+    <li><strong>SkillRunner:</strong> A production-deployed multi-tenant web application with 1,361+ backend tests and 544+ frontend tests.</li>
+    <li><strong>Proceda:</strong> An open-source Python SDK with 172+ tests, published on PyPI, achieving state-of-the-art on SOP-Bench with Gemini Flash models.</li>
+    <li><strong>6 benchmark bug reports</strong> filed against SOP-Bench itself.</li>
+    <li><strong>Three companion articles:</strong> <a href="sop-bench-results.html">benchmark results report</a>, <a href="https://github.com/vivekhaldar/proceda/blob/main/docs/blog-sop-bench-journey.md">48-hour journey narrative</a>, and <a href="sop-execution-engine-design.html">architectural design analysis</a>.</li>
+  </ul>
+
+  <p>The design critique loop, competing implementations, and structured extraction demonstrate that a solo founder with Claude Code can produce work that would typically require a small team &mdash; provided the process front-loads design quality rather than treating it as an afterthought.</p>
+
+  <div class="footer">
+    <p>Proceda is open source at <a href="https://github.com/vivekhaldar/proceda">github.com/vivekhaldar/proceda</a>. Built by <a href="https://enchiridionlabs.online">Enchiridion Labs</a>.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
