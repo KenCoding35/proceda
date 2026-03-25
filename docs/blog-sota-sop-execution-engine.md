@@ -84,6 +84,8 @@ The model never receives a prompt like "you are on step 3 of 12, here is what yo
 
 **Principle: Reduce the reasoning surface per LLM call.** Rather than asking the model to plan, provide a plan and ask it to execute one piece.
 
+This design decision is not purely technical. Stepwise execution also matches the mental model of the business users who author and oversee SOPs. Operations teams think in steps — they want to see which step the agent is on, review progress at each stage, and designate specific steps as requiring human sign-off before proceeding. A monolithic prompt that produces a single final answer offers no such visibility. The state machine architecture serves both the LLM (by reducing cognitive load per call) and the human operator (by providing the step-level observability and control they expect from any process automation system).
+
 ### 2. Control Tools as Explicit Progress Signals
 
 Two "control tools" are always injected into every LLM call alongside the domain's actual tools:
