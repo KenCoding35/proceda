@@ -375,3 +375,20 @@ class TestRedactDictEdgeCases:
         assert result["api_key"] == "**REDACTED**"
         assert result["Api_Key"] == "**REDACTED**"
         assert result["name"] == "keep"
+
+    def test_token_count_fields_not_redacted(self) -> None:
+        data = {
+            "prompt_tokens": 1234,
+            "completion_tokens": 567,
+            "total_tokens": 1801,
+            "cumulative_total_tokens": 5000,
+            "token": "secret-value",
+            "auth_token": "also-secret",
+        }
+        result = _redact_dict(data)
+        assert result["prompt_tokens"] == 1234
+        assert result["completion_tokens"] == 567
+        assert result["total_tokens"] == 1801
+        assert result["cumulative_total_tokens"] == 5000
+        assert result["token"] == "**REDACTED**"
+        assert result["auth_token"] == "**REDACTED**"

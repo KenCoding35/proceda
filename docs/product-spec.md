@@ -415,6 +415,7 @@ This demo is more important than secondary features.
 - `run`
 - `dev`
 - `lint`
+- `convert`
 - `replay`
 - `doctor`
 
@@ -539,7 +540,26 @@ Requirements:
 - Render prior run events without re-executing tools or LLM calls
 - Work even if upstream services are unavailable
 
-### 12.5 `proceda doctor`
+### 12.5 `proceda convert`
+
+Convert an arbitrary SOP document into SKILL.md format.
+
+```bash
+proceda convert my-sop.txt
+proceda convert my-sop.txt -o skills/SKILL.md
+proceda convert my-sop.txt --stdout
+proceda convert - < my-sop.txt
+```
+
+Requirements:
+
+- Accept any text file or stdin
+- Use LLM to produce valid SKILL.md with frontmatter, steps, and inferred markers
+- Validate output through the parser before writing
+- Support `--output`, `--name`, and `--stdout` options
+- Print summary of generated skill (name, step count, step titles)
+
+### 12.6 `proceda doctor`
 
 Validate local environment and configuration.
 
@@ -555,7 +575,7 @@ Requirements:
 - Check MCP connectivity where possible
 - Print actionable remediation steps
 
-### 12.6 Deferred Commands
+### 12.7 Deferred Commands
 
 These should not ship in v1 unless the implementation is nearly free:
 
@@ -797,7 +817,7 @@ v1 is ready when all of the following are true:
 1. A user can install the package and run a local example skill end to end.
 2. Approval and clarification flows work cleanly in terminal mode.
 3. The TUI feels intentional and polished.
-4. `lint`, `run`, `dev`, `replay`, and `doctor` all work.
+4. `lint`, `run`, `dev`, `convert`, `replay`, and `doctor` all work.
 5. Example MCP integrations are available.
 6. The README demo works exactly as advertised.
 7. Event logs are stable enough to support replay.

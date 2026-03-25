@@ -178,6 +178,7 @@ proceda/
           run.py
           dev.py
           lint.py
+          convert.py
           replay.py
           doctor.py
       tui/
@@ -576,6 +577,9 @@ Required fields:
 - `completed_steps: int`
 - `failed_step: int | None`
 - `event_log_path: Path`
+- `prompt_tokens: int`
+- `completion_tokens: int`
+- `total_tokens: int`
 
 ---
 
@@ -625,6 +629,10 @@ Every meaningful runtime transition must emit a structured `RunEvent`.
 - `clarification.responded`
 - `error.recovery_requested`
 - `error.recovery_selected`
+
+#### LLM Usage Events
+
+- `llm.usage` — emitted after each LLM call with `prompt_tokens`, `completion_tokens`, `total_tokens`, and cumulative counters
 
 #### Runtime State Events
 
@@ -750,6 +758,7 @@ Rationale:
 proceda run <path>
 proceda dev <path>
 proceda lint <path>
+proceda convert <input> [--output PATH] [--name HINT] [--stdout]
 proceda replay <run-id-or-path>
 proceda doctor
 ```
@@ -775,6 +784,12 @@ proceda doctor
 - parse and validate
 - report warnings/errors
 - exit non-zero on errors
+
+#### `convert`
+
+- transform arbitrary SOP text into SKILL.md via LLM
+- validate output through parser with retry loop
+- support file input, stdin, and stdout output
 
 #### `replay`
 

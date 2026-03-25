@@ -15,6 +15,11 @@ from proceda.mcp.models import MCPApp, MCPTool, MCPToolResult
 logger = logging.getLogger(__name__)
 
 
+def _normalize_tool_name(name: str) -> str:
+    """Normalize a tool name for fuzzy matching (strip separators, lowercase)."""
+    return name.replace("_", "").replace("-", "").lower()
+
+
 class MCPOrchestrator:
     """Manages MCP app connections, tool discovery, and access policies."""
 
@@ -79,12 +84,12 @@ class MCPOrchestrator:
 
     async def call_tool(self, qualified_name: str, arguments: dict[str, Any]) -> MCPToolResult:
         """Execute a tool call, enforcing access policies."""
-        if not self._is_tool_allowed(qualified_name):
-            raise ToolAccessDeniedError(qualified_name)
-
-        tool = self._tools.get(qualified_name)
+        tool = self._tools.get(qualified_name) or self.resolve_tool(qualified_name)
         if not tool:
             raise ToolExecutionError(qualified_name, f"Tool not found: {qualified_name}")
+
+        if not self._is_tool_allowed(tool.qualified_name):
+            raise ToolAccessDeniedError(tool.qualified_name)
 
         client = self._clients.get(tool.app_name)
         if not client:
@@ -94,12 +99,16 @@ class MCPOrchestrator:
         return await client.call_tool(tool.name, arguments)
 
     def resolve_tool(self, name: str) -> MCPTool | None:
-        """Look up a tool by qualified or unqualified name."""
+        """Look up a tool by qualified, unqualified, or normalized name."""
         if name in self._tools:
             return self._tools[name]
-        # Try unqualified name match
+        # Try unqualified name match (exact then normalized)
         for tool in self._tools.values():
             if tool.name == name:
+                return tool
+        normalized = _normalize_tool_name(name)
+        for tool in self._tools.values():
+            if _normalize_tool_name(tool.name) == normalized:
                 return tool
         return None
 
@@ -107,8 +116,7 @@ class MCPOrchestrator:
         """Return list of required tools that are not available."""
         if not self._required_tools:
             return []
-        available = set(self._tools.keys())
-        return [t for t in self._required_tools if t not in available]
+        return [t for t in self._required_tools if self.resolve_tool(t) is None]
 
     def _is_tool_allowed(self, qualified_name: str) -> bool:
         """Check if a tool is allowed by denylist and required_tools policies."""
@@ -119,7 +127,16 @@ class MCPOrchestrator:
 
         # Check required_tools allowlist (if declared)
         if self._required_tools is not None:
-            return qualified_name in self._required_tools
+            # Extract unqualified name (after app__ prefix) for matching
+            local_name = (
+                qualified_name.split("__", 1)[-1] if "__" in qualified_name else qualified_name
+            )
+            normalized_q = _normalize_tool_name(qualified_name)
+            normalized_l = _normalize_tool_name(local_name)
+            return any(
+                _normalize_tool_name(t) in (normalized_q, normalized_l)
+                for t in self._required_tools
+            )
 
         return True
 

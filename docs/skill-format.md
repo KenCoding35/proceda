@@ -70,6 +70,26 @@ This checks for:
 - Excessive step count > 20 (warning)
 - Large file size > 50KB (warning)
 
+## Converting arbitrary SOPs
+
+If you have an existing SOP in any format (plain text, numbered list, prose, wiki page), use `proceda convert` to transform it into a valid SKILL.md:
+
+```bash
+proceda convert my-sop.txt                    # Writes ./SKILL.md
+proceda convert my-sop.txt -o skills/SKILL.md # Custom output path
+proceda convert my-sop.txt --stdout           # Print to stdout
+proceda convert - < my-sop.txt                # Read from stdin
+proceda convert my-sop.txt --name my-workflow # Suggest a skill name
+```
+
+The converter uses an LLM to:
+- Generate appropriate `name` and `description` frontmatter
+- Break the SOP into sequential steps
+- Infer approval markers from the SOP's language
+- Preserve the substance of the original document
+
+The output is validated through the parser before being written. Review the generated SKILL.md and adjust markers or steps as needed.
+
 ## Path resolution
 
 `proceda run` accepts either:

@@ -1,0 +1,21 @@
+llm:
+  model: openrouter/google/gemini-2.5-flash
+  temperature: 0.0
+  max_tokens: 4096
+  api_key_env: OPENROUTER_API_KEY
+
+apps:
+  - name: sop-bench
+    description: SOP-Bench aircraft inspection tools
+    transport: stdio
+    command:
+      - uv
+      - --directory
+      - /Users/haldar/repos/gh/proceda.vivek-review-bench
+      - run
+      - python
+      - benchmarks/sop_bench/mcp_bridge.py
+      - --domain
+      - aircraft_inspection
+      - --data-dir
+      - /Users/haldar/repos/3p/sop-bench/src/amazon_sop_bench/benchmarks/data

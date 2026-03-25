@@ -65,6 +65,9 @@ class LLMResponse:
     tool_calls: list[ToolCall]
     reasoning: str | None = None
     raw_response: dict[str, Any] | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
 
 
 class LLMRuntime:
@@ -94,7 +97,7 @@ class LLMRuntime:
         last_error: Exception | None = None
 
         effective_tools = tools
-        if tools and self._model.startswith("gemini/"):
+        if tools and (self._model.startswith("gemini/") or self._model.startswith("vertex_ai/")):
             effective_tools = self._sanitize_tools_for_gemini(tools)
 
         for attempt in range(max_retries + 1):
@@ -106,9 +109,16 @@ class LLMRuntime:
                     "max_tokens": self._config.max_tokens,
                 }
 
+                # Gemini 2.5 Pro requires thinking mode
+                if "gemini-2.5-pro" in self._model:
+                    kwargs["thinking"] = {"type": "enabled", "budget_tokens": 1024}
+
                 if effective_tools:
                     kwargs["tools"] = effective_tools
                     kwargs["tool_choice"] = "auto"
+
+                if self._config.thinking:
+                    kwargs["thinking"] = {"type": self._config.thinking}
 
                 response = await litellm.acompletion(**kwargs)
                 return self._parse_response(response)
@@ -168,6 +178,8 @@ class LLMRuntime:
 
     def _parse_response(self, response: Any) -> LLMResponse:
         """Parse a LiteLLM response into our internal model."""
+        if not response.choices:
+            return LLMResponse(content=None, tool_calls=[])
         choice = response.choices[0]
         message = choice.message
 
@@ -197,11 +209,23 @@ class LLMRuntime:
                     )
                 )
 
+        # Extract token usage
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        if hasattr(response, "usage") and response.usage:
+            prompt_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
+            completion_tokens = getattr(response.usage, "completion_tokens", 0) or 0
+            total_tokens = getattr(response.usage, "total_tokens", 0) or 0
+
         return LLMResponse(
             content=content if content else None,
             tool_calls=tool_calls,
             reasoning=reasoning,
             raw_response=response.model_dump() if hasattr(response, "model_dump") else None,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
         )
 
     def format_messages(self, run_messages: list[RunMessage]) -> list[dict[str, Any]]:

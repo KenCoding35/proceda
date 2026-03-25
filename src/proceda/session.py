@@ -167,6 +167,9 @@ class RunSession:
     approval_records: list[ApprovalRecord] = field(default_factory=list)
     completed_steps: list[int] = field(default_factory=list)
     skipped_steps: list[int] = field(default_factory=list)
+    total_prompt_tokens: int = 0
+    total_completion_tokens: int = 0
+    total_llm_tokens: int = 0
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
@@ -223,3 +226,6 @@ class RunResult:
     total_steps: int
     failed_step: int | None = None
     event_log_path: Path | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0

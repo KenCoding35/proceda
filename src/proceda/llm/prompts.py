@@ -28,7 +28,19 @@ def build_system_prompt(skill: Skill, variables: dict[str, str] | None = None) -
         "or get input from the user, you MUST call `request_clarification` with your "
         "question. Do NOT just print the question as text — that does not pause for "
         "user input. Only `request_clarification` actually reaches the user.",
+        "- If a step instructs you to call a specific tool, you MUST call it — do not "
+        "skip tool calls based on your own judgment about whether the result is needed.",
     ]
+
+    if skill.output_fields:
+        fields = ", ".join(skill.output_fields)
+        tags = ", ".join(f"<{f}>value</{f}>" for f in skill.output_fields)
+        parts.append("")
+        parts.append(f"Output fields: {fields}")
+        parts.append(
+            "When completing the FINAL step, you MUST include each output field "
+            f"in your complete_step summary using XML tags: {tags}"
+        )
 
     if variables:
         parts.append("")
@@ -55,14 +67,27 @@ def build_system_prompt(skill: Skill, variables: dict[str, str] | None = None) -
     return "\n".join(parts)
 
 
-def build_step_prompt(step: SkillStep) -> str:
+def build_step_prompt(
+    step: SkillStep,
+    is_last_step: bool = False,
+    output_fields: list[str] | None = None,
+) -> str:
     """Build a user-facing prompt for starting a specific step."""
     markers_text = ""
     if step.markers:
         markers_text = " (" + ", ".join(m.value for m in step.markers) + ")"
 
-    return (
+    prompt = (
         f"Now execute Step {step.index}: {step.title}{markers_text}\n\n"
         f"{step.content}\n\n"
         f"When complete, call `complete_step` with a summary of what you did."
     )
+
+    if is_last_step and output_fields:
+        tags = "\n".join(f"  <{f}>YOUR_VALUE</{f}>" for f in output_fields)
+        prompt += (
+            "\n\nIMPORTANT: This is the final step. Your complete_step summary "
+            "MUST include these output fields as XML tags:\n" + tags
+        )
+
+    return prompt

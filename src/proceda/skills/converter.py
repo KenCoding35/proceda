@@ -1,0 +1,185 @@
+# ABOUTME: Converts arbitrary SOP text into valid SKILL.md format using an LLM.
+# ABOUTME: Handles retries with parse error feedback and code fence stripping.
+
+from __future__ import annotations
+
+import logging
+import re
+
+from proceda.config import LLMConfig
+from proceda.exceptions import ConversionError
+from proceda.llm.runtime import LLMRuntime
+from proceda.skills.parser import parse_skill
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 2
+
+_CONVERT_PROMPT = """\
+You are a document converter. Your job is to convert an arbitrary Standard \
+Operating Procedure (SOP) into Proceda's SKILL.md format.
+
+Output a complete SKILL.md file with this exact structure:
+
+---
+name: kebab-case-name
+description: A concise one-line description of what this SOP does
+required_tools:
+  - tool_name  # Only if the SOP references specific tools; omit this field entirely otherwise
+---
+
+### Step 1: Title
+Step instructions here.
+
+### Step 2: Title
+More instructions.
+
+Rules:
+- The YAML frontmatter MUST start with --- on the first line and end with --- on its own line
+- Generate a kebab-case `name` derived from the SOP's title or purpose
+- Write a concise `description` (one sentence)
+- Break the SOP into sequential steps using `### Step N: Title` headings (N starts at 1)
+- Each step title should be a short, imperative phrase
+- Preserve the substance of the original SOP in the step bodies — do not drop information
+- Add `[APPROVAL REQUIRED]` on its own line after the step heading where the SOP implies \
+human sign-off, review, verification, or approval after the step completes
+- Add `[PRE-APPROVAL REQUIRED]` where the SOP implies getting permission before acting
+- Add `[OPTIONAL]` where steps are explicitly conditional or optional
+- Only include `required_tools` if the SOP explicitly references specific tools or systems \
+that map to MCP tool names; otherwise omit the field entirely
+- If available MCP tools are listed in the input, reference them by name in the step \
+instructions and include the relevant ones in `required_tools`. Each step should call \
+exactly one tool where applicable. When specifying tool arguments, use the EXACT \
+parameter names from the tool schema — do NOT rename, abbreviate, or paraphrase them. \
+For example, if the tool parameter is called `insurance_provider`, write `insurance_provider`, \
+not `prescription_insurance_provider` or `provider_name`.
+- Output ONLY the SKILL.md content — no explanation, no wrapping, no code fences
+"""
+
+_CODE_FENCE_PATTERN = re.compile(
+    r"^```(?:markdown|md|yaml)?\s*\n(.*?)```\s*$",
+    re.DOTALL,
+)
+
+
+def _strip_code_fences(text: str) -> str:
+    """Strip markdown code fences that LLMs sometimes wrap output in."""
+    stripped = text.strip()
+    match = _CODE_FENCE_PATTERN.match(stripped)
+    if match:
+        return match.group(1).strip()
+    return stripped
+
+
+async def convert_sop(
+    text: str,
+    config: LLMConfig,
+    name_hint: str | None = None,
+    tool_context: list[dict[str, str]] | None = None,
+    output_fields: list[str] | None = None,
+) -> str:
+    """Convert arbitrary SOP text into valid SKILL.md format using an LLM.
+
+    Args:
+        text: The raw SOP text to convert.
+        config: LLM configuration.
+        name_hint: Suggested kebab-case name for the skill.
+        tool_context: List of available tools with 'name' and 'description' keys.
+            When provided, the converter will reference these tools in the SKILL.md
+            steps and include them in required_tools.
+        output_fields: List of expected output field names. When provided, the
+            converter adds output_fields to the YAML frontmatter and instructs the
+            final step to emit them as XML tags.
+
+    Returns the complete SKILL.md content as a string.
+    Raises ConversionError if conversion fails after retries.
+    """
+    if not text or not text.strip():
+        raise ConversionError("Input SOP text is empty")
+
+    needs_api_key = not config.model.startswith("ollama")
+    if needs_api_key and not config.api_key:
+        raise ConversionError(f"API key not set (expected env var: {config.api_key_env})")
+
+    llm = LLMRuntime(config)
+
+    user_content = text
+    if name_hint:
+        user_content = f"Suggested skill name: {name_hint}\n\n{text}"
+    if tool_context:
+        tool_lines = []
+        for t in tool_context:
+            line = f"  - {t['name']}: {t.get('description', '')}"
+            params = t.get("parameters") or t.get("inputSchema")
+            if isinstance(params, dict) and "properties" in params:
+                param_names = list(params["properties"].keys())
+                required = params.get("required", [])
+                param_descs = []
+                for p in param_names:
+                    prop = params["properties"][p]
+                    req = " (required)" if p in required else ""
+                    param_descs.append(f"      {p}{req}: {prop.get('description', '')}")
+                line += "\n    Parameters:\n" + "\n".join(param_descs)
+            tool_lines.append(line)
+        tools_block = "\n".join(tool_lines)
+        user_content += (
+            f"\n\nAvailable MCP tools. Use these EXACT tool names and EXACT parameter "
+            f"names in step instructions. List relevant tools in required_tools.\n"
+            f"{tools_block}"
+        )
+    if output_fields:
+        fields_yaml = "\n".join(f"  - {f}" for f in output_fields)
+        fields_tags = ", ".join(f"<{f}>value</{f}>" for f in output_fields)
+        user_content += (
+            f"\n\nThe skill MUST declare these output_fields in the YAML frontmatter:\n"
+            f"output_fields:\n{fields_yaml}\n"
+            f"The final step MUST instruct the agent to include these output values "
+            f"in the complete_step summary using XML tags: {fields_tags}"
+        )
+
+    messages: list[dict[str, str]] = [
+        {"role": "system", "content": _CONVERT_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+    last_error: Exception | None = None
+
+    for attempt in range(1 + MAX_RETRIES):
+        try:
+            response = await llm.complete(messages)
+        except Exception as e:
+            raise ConversionError(f"LLM call failed: {e}") from e
+
+        if not response.content:
+            last_error = ConversionError("LLM returned empty response")
+            continue
+
+        cleaned = _strip_code_fences(response.content)
+
+        try:
+            parse_skill(cleaned)
+            logger.info("SOP converted to valid SKILL.md on attempt %d", attempt + 1)
+            return cleaned
+        except Exception as e:
+            last_error = e
+            if attempt < MAX_RETRIES:
+                logger.info(
+                    "Conversion attempt %d failed to parse: %s — retrying",
+                    attempt + 1,
+                    e,
+                )
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            f"That output failed validation with this error:\n{e}\n\n"
+                            "Please fix the issue and output the corrected SKILL.md. "
+                            "Output ONLY the SKILL.md content, nothing else."
+                        ),
+                    }
+                )
+
+    raise ConversionError(
+        f"Failed to produce valid SKILL.md after {1 + MAX_RETRIES} attempts: {last_error}"
+    )

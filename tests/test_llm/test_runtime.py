@@ -20,11 +20,22 @@ from proceda.llm.runtime import (
 from proceda.session import ToolCall
 
 
-def _make_litellm_response(content: str = "ok", tool_calls: list | None = None):
+def _make_litellm_response(
+    content: str = "ok",
+    tool_calls: list | None = None,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    total_tokens: int = 0,
+):
     """Build a fake LiteLLM response object."""
     message = SimpleNamespace(content=content, tool_calls=tool_calls)
     choice = SimpleNamespace(message=message)
-    response = SimpleNamespace(choices=[choice])
+    usage = SimpleNamespace(
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+    )
+    response = SimpleNamespace(choices=[choice], usage=usage)
     response.model_dump = lambda: {"choices": [{"message": {"content": content}}]}
     return response
 
@@ -250,3 +261,40 @@ def test_parse_multiline_thinking():
     blocks, cleaned = parse_thinking_tags(text)
     assert blocks == ["line 1\nline 2"]
     assert cleaned == "rest"
+
+
+# ---------------------------------------------------------------------------
+# Item 5: Token usage extraction
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_parse_response_extracts_token_usage():
+    config = LLMConfig()
+    runtime = LLMRuntime(config)
+
+    response = _make_litellm_response(
+        "hello", prompt_tokens=100, completion_tokens=50, total_tokens=150
+    )
+
+    result = runtime._parse_response(response)
+    assert result.prompt_tokens == 100
+    assert result.completion_tokens == 50
+    assert result.total_tokens == 150
+
+
+@pytest.mark.asyncio
+async def test_parse_response_handles_missing_usage():
+    config = LLMConfig()
+    runtime = LLMRuntime(config)
+
+    # Response with no usage attribute
+    message = SimpleNamespace(content="hi", tool_calls=None)
+    choice = SimpleNamespace(message=message)
+    response = SimpleNamespace(choices=[choice])
+    response.model_dump = lambda: {}
+
+    result = runtime._parse_response(response)
+    assert result.prompt_tokens == 0
+    assert result.completion_tokens == 0
+    assert result.total_tokens == 0

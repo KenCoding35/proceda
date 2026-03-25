@@ -21,3 +21,5 @@ htmlcov/
 *.log
 *.cast
 proceda.yaml
+benchmarks/sop_bench/results/
+!benchmarks/sop_bench/results/.gitkeep

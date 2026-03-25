@@ -76,3 +76,7 @@ class ApprovalRejectedError(ProcedaError):
 
 class HumanInterfaceError(ProcedaError):
     """Raised for human interface communication errors."""
+
+
+class ConversionError(ProcedaError):
+    """Raised when an SOP cannot be converted to SKILL.md format."""

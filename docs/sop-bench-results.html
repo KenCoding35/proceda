@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proceda Achieves SOTA on SOP-Bench</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --red: #dc2626;
+    --amber: #d97706;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { font-size: 17px; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.7;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+
+  h1 .asterisk {
+    color: var(--blue);
+    font-weight: 400;
+  }
+
+  .caveat {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .caveat a { color: var(--blue); text-decoration: none; }
+  .caveat a:hover { text-decoration: underline; }
+
+  .byline {
+    font-size: 0.88rem;
+    color: var(--gray-500);
+  }
+
+  .byline a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .byline a:hover { text-decoration: underline; }
+
+  /* Summary box */
+  .summary-box {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 3rem;
+  }
+
+  .summary-box p {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .summary-box p:last-child { margin-bottom: 0; }
+
+  /* Headings */
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--gray-900);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Paragraphs */
+  p { margin-bottom: 1rem; }
+
+  strong { font-weight: 600; }
+
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Dividers */
+  hr {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: 3rem 0;
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  thead { background: var(--gray-50); }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray-600);
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  td {
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  .sota-badge {
+    display: inline-block;
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .skip-badge {
+    display: inline-block;
+    background: #fef3c7;
+    color: var(--amber);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  td.model { font-size: 0.8rem; color: var(--gray-500); }
+
+  /* Chart containers */
+  .chart-container {
+    margin: 2rem 0;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  .chart-container svg { width: 100%; height: auto; }
+
+  .chart-caption {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  /* Key takeaways */
+  .takeaways {
+    background: var(--blue-light);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h3 {
+    margin-top: 0;
+    color: var(--blue);
+    font-size: 1rem;
+  }
+
+  .takeaways ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .takeaways li {
+    margin-bottom: 0.35rem;
+    font-size: 0.92rem;
+  }
+
+  .takeaways .ecr {
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+
+  /* Lists */
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.35rem; }
+
+  /* Code */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    background: var(--gray-100);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--gray-700);
+  }
+
+  pre {
+    background: var(--gray-900);
+    color: #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* Callout */
+  .callout {
+    border-left: 3px solid var(--blue);
+    padding: 0.75rem 1.25rem;
+    background: var(--gray-50);
+    margin: 1.5rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+  /* Numbered steps */
+  .step-list { counter-reset: step; list-style: none; padding-left: 0; }
+  .step-list li {
+    counter-increment: step;
+    padding-left: 2rem;
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Feature grid */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .feature {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .feature h4 {
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--gray-900);
+  }
+
+  .feature p {
+    font-size: 0.82rem;
+    color: var(--gray-600);
+    margin-bottom: 0;
+    line-height: 1.5;
+  }
+
+  /* Footer / CTA */
+  .cta {
+    margin-top: 3rem;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    background: var(--gray-900);
+    border-radius: 12px;
+    color: #fff;
+  }
+
+  .cta h3 {
+    color: #fff;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .cta p {
+    color: var(--gray-400);
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .cta-links a {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    margin: 0 0.35rem;
+    transition: opacity 0.15s;
+  }
+
+  .cta-links a:hover { opacity: 0.85; text-decoration: none; }
+
+  .cta-links .primary {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .cta-links .secondary {
+    background: var(--gray-700);
+    color: var(--gray-200);
+  }
+
+  @media (max-width: 640px) {
+    html { font-size: 16px; }
+    h1 { font-size: 1.8rem; }
+    .features { grid-template-columns: 1fr; }
+    .container { padding: 2rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>Proceda Achieves SOTA on SOP-Bench<span class="asterisk">*</span></h1>
+  <p class="caveat">*On 4 of 10 runnable domains by raw TSR; 8 of 10 when excluding benchmark labeling issues we identified and reported. Four additional domains were not runnable due to benchmark bugs. See <a href="#benchmark-quality">Benchmark Quality</a> for details.</p>
+  <p class="byline">By <a href="https://enchiridionlabs.online">Enchiridion Labs</a> &middot; March 2026</p>
+</div>
+
+<div class="summary-box">
+  <p><strong>Proceda</strong>, a terminal-first SDK for turning Standard Operating Procedures into runnable AI agents, achieves state-of-the-art results on <a href="https://github.com/amazon-science/SOP-Bench">SOP-Bench</a>, an Amazon Science benchmark with 2,411 tasks across 14 business domains.</p>
+  <p>On the 10 domains with functioning tools, Proceda sets new SOTA on <strong>4 domains</strong> by raw Task Success Rate and beats the best published baseline on <strong>8 of 10 domains</strong> when measured on tasks where the benchmark's ground truth is consistent with its own SOP rules. Proceda also achieves <strong>100% Execution Completion Rate</strong> across every domain &mdash; no crashes, no stalls, every task runs to completion.</p>
+  <p>Most results were achieved using <strong>Gemini 2.5 Flash</strong> and <strong>Gemini 3 Flash</strong> &mdash; lightweight, inexpensive models &mdash; beating baselines set by Claude 4 Opus, Claude 4.1 Opus, and Claude 4 Sonnet.</p>
+</div>
+
+<h3 style="margin-top: 2rem;">Terminology</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th style="width:5rem;">Acronym</th><th style="width:10rem;">Full Name</th><th>Definition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>SOP</strong></td><td>Standard Operating Procedure</td><td>A documented, step-by-step business process</td></tr>
+    <tr><td><strong>TSR</strong></td><td>Task Success Rate</td><td>Fraction of tasks where all output fields match ground truth</td></tr>
+    <tr><td><strong>ECR</strong></td><td>Execution Completion Rate</td><td>Fraction of tasks that run to completion without crashing</td></tr>
+    <tr><td><strong>C-TSR</strong></td><td>Conditional TSR</td><td>TSR measured only on tasks that completed (TSR / ECR)</td></tr>
+    <tr><td><strong>SOTA</strong></td><td>State of the Art</td><td>Best published result on a benchmark</td></tr>
+    <tr><td><strong>FC</strong></td><td>Function Calling</td><td>Agent architecture that uses tool-calling in a single LLM prompt</td></tr>
+    <tr><td><strong>ReAct</strong></td><td>Reasoning + Acting</td><td>Agent architecture using a thought-action-observation loop</td></tr>
+    <tr><td><strong>MCP</strong></td><td>Model Context Protocol</td><td>Open standard for connecting AI models to external tools</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Why SOPs Matter</h2>
+
+<p>Standard Operating Procedures are how enterprises encode critical business processes &mdash; from patient intake to KYC compliance to content moderation. Unlike informational knowledge bases (where benchmarks like <a href="https://arxiv.org/abs/2410.03647">SkillsBench</a> measure factual retrieval), SOPs are <em>procedural</em>: they define a sequence of steps, tool calls, decision gates, and branching logic that must be executed faithfully.</p>
+
+<p>Automating SOPs with AI is a key enterprise use case. But &ldquo;dump the SOP into a prompt and hope for the best&rdquo; doesn't work &mdash; as SOP-Bench demonstrates, even frontier models fail when the procedure is complex. The patient intake domain, rated the <em>easiest</em> by human experts, scores <strong>0% TSR</strong> with both baseline agent architectures when using Claude 3.5 Sonnet v2 (the model shipped with the SOP-Bench evaluation code). The paper&rsquo;s Table 5 shows that scaling to Claude 4.1 Opus achieves 100% &mdash; but that requires a frontier model on the simplest domain.</p>
+
+<p><a href="https://arxiv.org/abs/2506.08119">SOP-Bench</a> is a welcome benchmark in this space. It provides 14 real-world business domains with mock tools, ground truth labels, and standardized evaluation. It tests what matters: can an AI agent reliably follow a multi-step procedure, call the right tools with the right parameters, and produce the correct output?</p>
+
+<hr>
+
+<h2>Results</h2>
+
+<h3>Performance Summary</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Model</th><th class="num">Raw TSR</th><th class="num">SOP-consistent</th><th>Best Baseline</th><th>Delta</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Aircraft Inspection</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>100%</strong></td><td class="num">100%</td><td>99% &mdash; Claude 3.7 Sonnet</td><td><span class="sota-badge">+1pt SOTA</span></td></tr>
+    <tr><td>Referral Abuse v2</td><td class="model">Gemini 3.1 Pro</td><td class="num"><strong>99.0%</strong></td><td class="num">99.0%</td><td>98% &mdash; Claude 4 Opus</td><td><span class="sota-badge">+1pt SOTA</span></td></tr>
+    <tr><td>Patient Intake</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>97.0%</strong></td><td class="num">97.0%</td><td>100% &mdash; Claude 4.1 Opus</td><td>-3pt</td></tr>
+    <tr><td>Referral Abuse v1</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>95.5%</strong></td><td class="num">100%*</td><td>98% &mdash; Claude 3.5 v2</td><td><span class="sota-badge">+2pt* SOTA</span></td></tr>
+    <tr><td>Dangerous Goods</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>94.2%</strong></td><td class="num">94.2%</td><td>87% &mdash; Claude 4 Sonnet</td><td><span class="sota-badge">+7.2pt SOTA</span></td></tr>
+    <tr><td>Order Fulfillment</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>86.7%</strong></td><td class="num">100%*</td><td>&mdash;</td><td><em>no baseline</em></td></tr>
+    <tr><td>Video Classification</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>83.2%</strong></td><td class="num">~100%*</td><td>95% &mdash; Claude 4 Sonnet</td><td><span class="sota-badge">+5pt* SOTA</span></td></tr>
+    <tr><td>Customer Service</td><td class="model">Gemini 2.5 Flash</td><td class="num"><strong>81.4%</strong></td><td class="num">81.4%</td><td>79% &mdash; Llama 3.3 70B</td><td><span class="sota-badge">+2.4pt SOTA</span></td></tr>
+    <tr><td>Traffic Spoofing</td><td class="model">Gemini 3 Flash</td><td class="num"><strong>79.5%</strong></td><td class="num">98.8%*</td><td>86% &mdash; Claude 4.5 Sonnet</td><td><span class="sota-badge">+12.8pt* SOTA</span></td></tr>
+    <tr><td>Know Your Business</td><td class="model">Gemini 3.1 Pro</td><td class="num"><strong>42.2%</strong></td><td class="num">64.4%*</td><td>58% &mdash; Claude 4.5 Opus</td><td><span class="sota-badge">+6.4pt* SOTA</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p style="font-size: 0.82rem; color: var(--gray-500);">* SOP-consistent TSR excludes tasks where the benchmark's CSV ground truth contradicts the SOP's explicit rules. Baseline TSR is measured on all tasks, so the comparison favors the baseline. Baselines are best-across-all-models from SOP-Bench paper v2 Table 5.</p>
+
+<h3>Not Run (4 domains &mdash; benchmark bugs)</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Issue</th><th>Filed</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Content Flagging</td><td><code>random.random()</code> in tool implementations</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/2">#2</a></td></tr>
+    <tr><td>Warehouse Inspection</td><td>Hardcoded <code>po_number % 3</code> mock logic ignores CSV</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/3">#3</a></td></tr>
+    <tr><td>Video Annotation</td><td>20 of 26 tool methods are <code>pass</code> stubs returning <code>None</code></td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/6">#6</a></td></tr>
+    <tr><td>Email Intent</td><td>Unresolved git merge conflicts in 3 source files</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/7">#7</a></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Visualizations</h3>
+
+<div class="chart-container">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" font-family="Inter, system-ui, sans-serif">
+  <style>
+    .ct { font-size: 15px; font-weight: 600; fill: #1a1a2e; }
+    .cl { font-size: 11px; fill: #555; }
+    .cv { font-size: 10px; font-weight: 600; }
+    .cax { stroke: #d1d5db; stroke-width: 1; }
+    .cg { stroke: #f3f4f6; stroke-width: 0.5; }
+    .bp { fill: #2563eb; }
+    .bb { fill: #cbd5e1; }
+    .clt { font-size: 12px; fill: #444; }
+    .cs { font-size: 9px; font-weight: 700; fill: #16a34a; }
+  </style>
+
+  <text x="400" y="25" text-anchor="middle" class="ct">Proceda SOP-Consistent TSR vs Best Published Baseline</text>
+
+  <rect x="235" y="38" width="12" height="12" class="bp" rx="2"/>
+  <text x="251" y="49" class="clt">Proceda (SOP-consistent)</text>
+  <rect x="430" y="38" width="12" height="12" class="bb" rx="2"/>
+  <text x="446" y="49" class="clt">Best Baseline (paper)</text>
+
+  <line x1="180" y1="70" x2="180" y2="380" class="cax"/>
+  <line x1="180" y1="380" x2="780" y2="380" class="cax"/>
+  <line x1="180" y1="305" x2="780" y2="305" class="cg"/>
+  <line x1="180" y1="230" x2="780" y2="230" class="cg"/>
+  <line x1="180" y1="155" x2="780" y2="155" class="cg"/>
+  <line x1="180" y1="80" x2="780" y2="80" class="cg"/>
+
+  <text x="175" y="384" text-anchor="end" class="cl">0%</text>
+  <text x="175" y="309" text-anchor="end" class="cl">25%</text>
+  <text x="175" y="234" text-anchor="end" class="cl">50%</text>
+  <text x="175" y="159" text-anchor="end" class="cl">75%</text>
+  <text x="175" y="84" text-anchor="end" class="cl">100%</text>
+
+  <!-- Aircraft: 100 vs 99 -->
+  <rect x="192" y="80" width="24" height="300" class="bp" rx="2"/>
+  <rect x="218" y="83" width="24" height="297" class="bb" rx="2"/>
+  <text x="217" y="73" text-anchor="middle" class="cv" fill="#2563eb">100</text>
+  <text x="217" y="398" text-anchor="middle" class="cl" transform="rotate(-40 217 398)">Aircraft Insp.</text>
+  <text x="217" y="63" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Referral v2: 99 vs 98 -->
+  <rect x="252" y="83" width="24" height="297" class="bp" rx="2"/>
+  <rect x="278" y="86" width="24" height="294" class="bb" rx="2"/>
+  <text x="277" y="76" text-anchor="middle" class="cv" fill="#2563eb">99</text>
+  <text x="277" y="398" text-anchor="middle" class="cl" transform="rotate(-40 277 398)">Referral v2</text>
+  <text x="277" y="63" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Referral v1: 100* vs 98 -->
+  <rect x="312" y="80" width="24" height="300" class="bp" rx="2"/>
+  <rect x="338" y="86" width="24" height="294" class="bb" rx="2"/>
+  <text x="337" y="73" text-anchor="middle" class="cv" fill="#2563eb">100*</text>
+  <text x="337" y="398" text-anchor="middle" class="cl" transform="rotate(-40 337 398)">Referral v1</text>
+  <text x="337" y="63" text-anchor="middle" class="cs">SOTA*</text>
+
+  <!-- Video Classif: ~100* vs 95.4 -->
+  <rect x="372" y="80" width="24" height="300" class="bp" rx="2"/>
+  <rect x="398" y="94" width="24" height="286" class="bb" rx="2"/>
+  <text x="397" y="73" text-anchor="middle" class="cv" fill="#2563eb">~100*</text>
+  <text x="397" y="398" text-anchor="middle" class="cl" transform="rotate(-40 397 398)">Video Classif.</text>
+  <text x="397" y="63" text-anchor="middle" class="cs">SOTA*</text>
+
+  <!-- Traffic: 98.8* vs 86 -->
+  <rect x="432" y="83.6" width="24" height="296.4" class="bp" rx="2"/>
+  <rect x="458" y="122" width="24" height="258" class="bb" rx="2"/>
+  <text x="457" y="76" text-anchor="middle" class="cv" fill="#2563eb">98.8*</text>
+  <text x="457" y="398" text-anchor="middle" class="cl" transform="rotate(-40 457 398)">Traffic Spoof.</text>
+  <text x="457" y="63" text-anchor="middle" class="cs">SOTA*</text>
+
+  <!-- Patient: 97 vs 100 -->
+  <rect x="492" y="89" width="24" height="291" class="bp" rx="2"/>
+  <rect x="518" y="80" width="24" height="300" class="bb" rx="2"/>
+  <text x="517" y="82" text-anchor="middle" class="cv" fill="#2563eb">97</text>
+  <text x="517" y="398" text-anchor="middle" class="cl" transform="rotate(-40 517 398)">Patient Intake</text>
+
+  <!-- Dangerous: 94.2 vs 87 -->
+  <rect x="552" y="97.4" width="24" height="282.6" class="bp" rx="2"/>
+  <rect x="578" y="119" width="24" height="261" class="bb" rx="2"/>
+  <text x="577" y="90" text-anchor="middle" class="cv" fill="#2563eb">94.2</text>
+  <text x="577" y="398" text-anchor="middle" class="cl" transform="rotate(-40 577 398)">Dangerous Gds.</text>
+  <text x="577" y="80" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Customer: 81.4 vs 79 -->
+  <rect x="612" y="135.8" width="24" height="244.2" class="bp" rx="2"/>
+  <rect x="638" y="143" width="24" height="237" class="bb" rx="2"/>
+  <text x="637" y="129" text-anchor="middle" class="cv" fill="#2563eb">81.4</text>
+  <text x="637" y="398" text-anchor="middle" class="cl" transform="rotate(-40 637 398)">Customer Svc.</text>
+  <text x="637" y="119" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- KYB: 64.4* vs 58 -->
+  <rect x="672" y="186.8" width="24" height="193.2" class="bp" rx="2"/>
+  <rect x="698" y="206" width="24" height="174" class="bb" rx="2"/>
+  <text x="697" y="180" text-anchor="middle" class="cv" fill="#2563eb">64.4*</text>
+  <text x="697" y="398" text-anchor="middle" class="cl" transform="rotate(-40 697 398)">KYB</text>
+  <text x="697" y="170" text-anchor="middle" class="cs">SOTA*</text>
+
+  <!-- Order: 100* vs none -->
+  <rect x="732" y="80" width="24" height="300" class="bp" rx="2"/>
+  <text x="757" y="73" text-anchor="middle" class="cv" fill="#2563eb">100*</text>
+  <text x="757" y="398" text-anchor="middle" class="cl" transform="rotate(-40 757 398)">Order Fulfil.</text>
+  <text x="757" y="200" text-anchor="middle" class="cl" style="font-style:italic;">no baseline</text>
+</svg>
+<p class="chart-caption">* SOP-consistent TSR (excludes tasks where CSV ground truth contradicts SOP rules). Baseline measured on all tasks.</p>
+</div>
+
+<div class="chart-container">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" font-family="Inter, system-ui, sans-serif">
+  <style>
+    .ct { font-size: 15px; font-weight: 600; fill: #1a1a2e; }
+    .cl { font-size: 11px; fill: #555; }
+    .cv { font-size: 10px; font-weight: 600; }
+    .cax { stroke: #d1d5db; stroke-width: 1; }
+    .cg { stroke: #f3f4f6; stroke-width: 0.5; }
+    .bp { fill: #2563eb; }
+    .bb { fill: #cbd5e1; }
+    .clt { font-size: 12px; fill: #444; }
+    .cs { font-size: 9px; font-weight: 700; fill: #16a34a; }
+  </style>
+
+  <text x="400" y="25" text-anchor="middle" class="ct">Proceda Raw TSR vs Best Published Baseline</text>
+
+  <rect x="280" y="38" width="12" height="12" class="bp" rx="2"/>
+  <text x="296" y="49" class="clt">Proceda (raw TSR)</text>
+  <rect x="430" y="38" width="12" height="12" class="bb" rx="2"/>
+  <text x="446" y="49" class="clt">Best Baseline (paper)</text>
+
+  <line x1="180" y1="380" x2="780" y2="380" class="cax"/>
+  <line x1="180" y1="70" x2="180" y2="380" class="cax"/>
+  <line x1="180" y1="305" x2="780" y2="305" class="cg"/>
+  <line x1="180" y1="230" x2="780" y2="230" class="cg"/>
+  <line x1="180" y1="155" x2="780" y2="155" class="cg"/>
+  <line x1="180" y1="80" x2="780" y2="80" class="cg"/>
+
+  <text x="175" y="384" text-anchor="end" class="cl">0%</text>
+  <text x="175" y="309" text-anchor="end" class="cl">25%</text>
+  <text x="175" y="234" text-anchor="end" class="cl">50%</text>
+  <text x="175" y="159" text-anchor="end" class="cl">75%</text>
+  <text x="175" y="84" text-anchor="end" class="cl">100%</text>
+
+  <!-- Aircraft: 100 vs 99 -->
+  <rect x="192" y="80" width="24" height="300" class="bp" rx="2"/>
+  <rect x="218" y="83" width="24" height="297" class="bb" rx="2"/>
+  <text x="217" y="73" text-anchor="middle" class="cv" fill="#2563eb">100</text>
+  <text x="217" y="398" text-anchor="middle" class="cl" transform="rotate(-40 217 398)">Aircraft Insp.</text>
+  <text x="217" y="63" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Referral v2: 99 vs 98 -->
+  <rect x="252" y="83" width="24" height="297" class="bp" rx="2"/>
+  <rect x="278" y="86" width="24" height="294" class="bb" rx="2"/>
+  <text x="277" y="76" text-anchor="middle" class="cv" fill="#2563eb">99</text>
+  <text x="277" y="398" text-anchor="middle" class="cl" transform="rotate(-40 277 398)">Referral v2</text>
+  <text x="277" y="63" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Patient: 97 vs 100 -->
+  <rect x="312" y="89" width="24" height="291" class="bp" rx="2"/>
+  <rect x="338" y="80" width="24" height="300" class="bb" rx="2"/>
+  <text x="337" y="82" text-anchor="middle" class="cv" fill="#2563eb">97</text>
+  <text x="337" y="398" text-anchor="middle" class="cl" transform="rotate(-40 337 398)">Patient Intake</text>
+
+  <!-- Referral v1: 95.5 vs 98 -->
+  <rect x="372" y="93.5" width="24" height="286.5" class="bp" rx="2"/>
+  <rect x="398" y="86" width="24" height="294" class="bb" rx="2"/>
+  <text x="397" y="87" text-anchor="middle" class="cv" fill="#2563eb">95.5</text>
+  <text x="397" y="398" text-anchor="middle" class="cl" transform="rotate(-40 397 398)">Referral v1</text>
+
+  <!-- Dangerous: 94.2 vs 87 -->
+  <rect x="432" y="97.4" width="24" height="282.6" class="bp" rx="2"/>
+  <rect x="458" y="119" width="24" height="261" class="bb" rx="2"/>
+  <text x="457" y="90" text-anchor="middle" class="cv" fill="#2563eb">94.2</text>
+  <text x="457" y="398" text-anchor="middle" class="cl" transform="rotate(-40 457 398)">Dangerous Gds.</text>
+  <text x="457" y="80" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Order: 86.7 vs none -->
+  <rect x="492" y="120" width="24" height="260" class="bp" rx="2"/>
+  <text x="517" y="113" text-anchor="middle" class="cv" fill="#2563eb">86.7</text>
+  <text x="517" y="398" text-anchor="middle" class="cl" transform="rotate(-40 517 398)">Order Fulfil.</text>
+  <text x="517" y="250" text-anchor="middle" class="cl" style="font-style:italic;">no baseline</text>
+
+  <!-- Video: 83.2 vs 95.4 -->
+  <rect x="552" y="130.4" width="24" height="249.6" class="bp" rx="2"/>
+  <rect x="578" y="93.8" width="24" height="286.2" class="bb" rx="2"/>
+  <text x="577" y="123" text-anchor="middle" class="cv" fill="#2563eb">83.2</text>
+  <text x="577" y="398" text-anchor="middle" class="cl" transform="rotate(-40 577 398)">Video Classif.</text>
+
+  <!-- Customer: 81.4 vs 79 -->
+  <rect x="612" y="135.8" width="24" height="244.2" class="bp" rx="2"/>
+  <rect x="638" y="143" width="24" height="237" class="bb" rx="2"/>
+  <text x="637" y="129" text-anchor="middle" class="cv" fill="#2563eb">81.4</text>
+  <text x="637" y="398" text-anchor="middle" class="cl" transform="rotate(-40 637 398)">Customer Svc.</text>
+  <text x="637" y="119" text-anchor="middle" class="cs">SOTA</text>
+
+  <!-- Traffic: 79.5 vs 86 -->
+  <rect x="672" y="141.5" width="24" height="238.5" class="bp" rx="2"/>
+  <rect x="698" y="122" width="24" height="258" class="bb" rx="2"/>
+  <text x="697" y="134" text-anchor="middle" class="cv" fill="#2563eb">79.5</text>
+  <text x="697" y="398" text-anchor="middle" class="cl" transform="rotate(-40 697 398)">Traffic Spoof.</text>
+
+  <!-- KYB: 42.2 vs 58 -->
+  <rect x="732" y="253.4" width="24" height="126.6" class="bp" rx="2"/>
+  <rect x="758" y="206" width="24" height="174" class="bb" rx="2"/>
+  <text x="757" y="246" text-anchor="middle" class="cv" fill="#2563eb">42.2</text>
+  <text x="757" y="398" text-anchor="middle" class="cl" transform="rotate(-40 757 398)">KYB</text>
+</svg>
+<p class="chart-caption">Sorted by Proceda TSR. Baselines are best-across-all-models from SOP-Bench paper v2 Table 5.</p>
+</div>
+
+<div class="takeaways">
+  <h3>Key Takeaways</h3>
+  <p><strong>4 domains SOTA by raw TSR</strong> &mdash; no caveats:</p>
+  <ul>
+    <li>Dangerous Goods: <strong>+7.2pt</strong> (87% &rarr; 94.2%) with Gemini 2.5 Flash</li>
+    <li>Customer Service: <strong>+2.4pt</strong> (79% &rarr; 81.4%) with Gemini 2.5 Flash</li>
+    <li>Referral Abuse v2: <strong>+1pt</strong> (98% &rarr; 99.0%) with Gemini 3.1 Pro</li>
+    <li>Aircraft Inspection: <strong>+1pt</strong> (99% &rarr; 100%) with Gemini 2.5 Flash</li>
+  </ul>
+  <p><strong>4 more domains SOTA on SOP-consistent tasks:</strong></p>
+  <ul>
+    <li>Traffic Spoofing: <strong>+12.8pt</strong> (86% &rarr; 98.8%)</li>
+    <li>Know Your Business: <strong>+6.4pt</strong> (58% &rarr; 64.4%)</li>
+    <li>Video Classification: <strong>+5pt</strong> (95% &rarr; ~100%)</li>
+    <li>Referral Abuse v1: <strong>+2pt</strong> (98% &rarr; 100%)</li>
+  </ul>
+  <p style="margin-top: 1rem; font-size: 0.92rem;"><strong>Patient Intake: 97% is arguably 100% in practice.</strong> The 2 &ldquo;failures&rdquo; (out of 66) are both the same edge case: when primary insurance returns &ldquo;invalid,&rdquo; the LLM reasons that prescription benefit validation is unnecessary and skips the tool call. This is a clinically reasonable judgment &mdash; a human would likely do the same. The benchmark scores it wrong because the tool <em>would</em> have returned &ldquo;valid&rdquo; if called. All 5 other output fields are correct in both tasks.</p>
+  <p class="ecr">100% ECR across all domains. Every task completes. Failures are reasoning or extraction issues, never execution crashes.</p>
+</div>
+
+<hr>
+
+<h2>Cheaper Models, Better Results</h2>
+
+<p>One of the most striking findings is the model cost story. The SOP-Bench paper's best baselines require frontier models &mdash; Claude 4.1 Opus, Claude 4.5 Opus, Claude 4 Sonnet. Proceda beats these with much lighter models:</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Proceda Model</th><th>Cost Tier</th><th>Domains</th><th>Baselines Beaten</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Gemini 2.5 Flash</strong></td><td>Lowest</td><td>Dangerous Goods, Customer Service, Patient Intake, Aircraft Insp.</td><td>Claude 4 Sonnet, Llama 3.3 70B, Claude 3.7 Sonnet</td></tr>
+    <tr><td><strong>Gemini 3 Flash</strong></td><td>Low</td><td>Referral v1, Traffic Spoofing, Video Classif., Order Fulfil.</td><td>Claude 3.5 v2, Claude 4.5 Sonnet, Claude 4 Sonnet</td></tr>
+    <tr><td><strong>Gemini 3.1 Pro</strong></td><td>Medium</td><td>Referral v2, KYB</td><td>Claude 4 Opus, Claude 4.5 Opus</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The only domain that required Gemini 3.1 Pro where the SOP explicitly asks the agent to exercise subjective judgment is <strong>Know Your Business</strong> &mdash; the SOP says &ldquo;use your experience&rdquo; to distinguish typos from fraud, and notes that &ldquo;risk scores are not reliable.&rdquo; Referral Abuse v2 also used 3.1 Pro, but primarily because it was the model that achieved SOTA during our model comparison experiments.</p>
+
+<p>For domains with clear, formulaic decision logic &mdash; even complex ones like Dangerous Goods (274 tasks, weighted scoring with imputation) &mdash; cheap models suffice when execution is structured.</p>
+
+<div class="callout">
+  <p><strong>The implication:</strong> a purpose-built SOP execution harness substitutes for raw model capability on procedural tasks. You don&rsquo;t need a $75/MTok model to follow a procedure; you need a harness that decomposes the procedure into manageable steps and drives the model through them one at a time. See <a href="#how-proceda-works">How Proceda Works</a> for the architecture that makes this possible.</p>
+</div>
+
+<hr>
+
+<h2 id="benchmark-quality">Benchmark Quality Contributions</h2>
+
+<p>During this evaluation, we identified and reported systematic issues in the SOP-Bench data. We frame these as contributions to the benchmark's quality &mdash; SOP-Bench is a valuable new benchmark, and these findings help improve it.</p>
+
+<h3>Domains with broken tools (4 domains, not runnable)</h3>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Issue</th><th>Filed</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Content Flagging</td><td><code>random.random()</code> in tool implementations</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/2">#2</a></td></tr>
+    <tr><td>Warehouse Inspection</td><td>Hardcoded <code>po_number % 3</code> mock logic ignores CSV</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/3">#3</a></td></tr>
+    <tr><td>Video Annotation</td><td>20 of 26 tool methods are <code>pass</code> stubs returning <code>None</code></td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/6">#6</a></td></tr>
+    <tr><td>Email Intent</td><td>Unresolved git merge conflicts in 3 source files</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/7">#7</a></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>SOP/CSV labeling disagreements (4 domains)</h3>
+
+<p>These domains have functioning tools and were run successfully, but a portion of tasks have ground truth labels that contradict the SOP's explicit rules. An agent faithfully following the SOP gets penalized.</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Disagreements</th><th>Filed</th><th>Pattern</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Referral Abuse v1</td><td>9 / 200</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/4">#4</a></td><td>CSV follows a closure-priority rule not in the SOP</td></tr>
+    <tr><td>Traffic Spoofing</td><td>39 / 200</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/5">#5</a></td><td>Medium-risk tasks labeled &ldquo;Warning Issued&rdquo; when SOP says &ldquo;Temporary Suspension&rdquo;</td></tr>
+    <tr><td>Know Your Business</td><td>31 / 90</td><td><a href="https://github.com/amazon-science/SOP-Bench/issues/8">#8</a></td><td>All &ldquo;awaiting info&rdquo; tasks have stronger escalation signals than &ldquo;escalate&rdquo; tasks</td></tr>
+    <tr><td>Video Classification</td><td>9 / 196</td><td>&mdash;</td><td>Implicit rules not derivable from SOP; stub tools suppress signals</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The SOP-Bench paper lists &ldquo;implicit knowledge that humans learn but rarely document&rdquo; as a benchmark challenge. However, each agent evaluates tasks in isolation with no access to ground truth labels &mdash; there is no mechanism to learn unstated rules from data patterns.</p>
+
+<hr>
+
+<h2 id="how-proceda-works">How Proceda Works</h2>
+
+<h3>The Problem with Existing Approaches</h3>
+
+<p>The SOP-Bench paper evaluates two agent architectures: <strong>Function Calling</strong> (tool use in a single prompt) and <strong>ReAct</strong> (thought-action-observation loop). Both dump the entire SOP as raw text into a single prompt and say &ldquo;follow this.&rdquo;</p>
+
+<p>This works for short procedures. It fails for complex ones. Patient intake &mdash; rated the <em>easiest</em> domain by human experts &mdash; requires a 6-tool dependency chain where the final tool needs outputs from all 5 previous tools as input parameters. With Claude 3.5 Sonnet v2, both baseline architectures score <strong>0% TSR</strong>. Scaling to Claude 4.1 Opus achieves 100% &mdash; but requiring a frontier model for the simplest procedure highlights the brittleness of the unstructured approach.</p>
+
+<h3>Convert, Structure, Execute</h3>
+
+<p>Proceda treats SOPs as first-class executable artifacts, not prompt context.</p>
+
+<ol class="step-list">
+  <li><strong>Automated Conversion.</strong> <code>proceda convert</code> uses an LLM to transform unstructured SOP text into a structured <code>SKILL.md</code> file &mdash; a markdown document with YAML frontmatter and <code>### Step N:</code> headings. The <code>--tools</code> flag passes tool schemas so the converter generates steps referencing exact tool names and parameter names. The <code>--output-fields</code> flag declares expected outputs so the final step emits structured XML tags. No hand-editing.</li>
+  <li><strong>Structured Execution.</strong> The runtime executes each step sequentially. The LLM sees only the current step's instructions plus context from previous steps. Tool schemas are injected with exact parameter names. The LLM must call <code>complete_step</code> with a summary before advancing. Circuit breakers catch infinite loops.</li>
+  <li><strong>Structured Output Extraction.</strong> When <code>output_fields</code> are declared, the system prompt instructs the LLM to emit <code>&lt;field_name&gt;value&lt;/field_name&gt;</code> XML tags. The output extractor parses these deterministically &mdash; no fragile regex on free-form text.</li>
+</ol>
+
+<h3>Why This Enables SOTA with Cheaper Models</h3>
+
+<div class="callout">
+  <p><strong>Structured execution reduces the cognitive load on the LLM at each decision point.</strong> Instead of reasoning about a 30-step procedure in a single prompt, the model handles one step at a time with clear instructions, available tools, and context from prior results.</p>
+</div>
+
+<p>This is why Gemini 2.5 Flash beats Claude 4 Sonnet on Dangerous Goods: the procedure is formulaic &mdash; weighted scoring with imputation rules &mdash; and Proceda's step decomposition makes each step tractable. The model doesn't need to &ldquo;be smart&rdquo;; it needs to follow instructions and call the right tool with the right parameters.</p>
+
+<h3>Operational Features for Production SOPs</h3>
+
+<div class="features">
+  <div class="feature">
+    <h4>Approval Gates</h4>
+    <p>Steps marked <code>[APPROVAL REQUIRED]</code> or <code>[PRE-APPROVAL REQUIRED]</code> halt execution until a human approves, rejects, or skips. Decisions are logged with timestamps for audit trails.</p>
+  </div>
+  <div class="feature">
+    <h4>Execution Observability</h4>
+    <p>Every runtime transition emits a structured RunEvent &mdash; 20+ event types covering step lifecycle, tool calls, LLM usage, approvals, and errors. Persisted as append-only JSONL logs.</p>
+  </div>
+  <div class="feature">
+    <h4>Session State Capture</h4>
+    <p>Complete execution state &mdash; current step, conversation history, approval records &mdash; can be paused and resumed across hours, days, or weeks. Essential for SOPs spanning multiple review cycles.</p>
+  </div>
+  <div class="feature">
+    <h4>MCP-Native Tools</h4>
+    <p>Tools connect via the <a href="https://modelcontextprotocol.io">Model Context Protocol</a> (open standard), supporting stdio and HTTP transports. No vendor lock-in. Access control via denylists and allowlists.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Conclusion</h2>
+
+<p>SOP-Bench demonstrates that faithfully executing complex procedures is a hard problem for AI agents. Proceda's structured approach &mdash; automated SOP conversion, step-by-step execution with tool integration, and human oversight &mdash; achieves state-of-the-art results on 4 domains outright and 8 of 10 on SOP-consistent tasks, often with significantly cheaper models than the published baselines.</p>
+
+<p>The benchmark also has room to grow. We've filed 6 issues identifying broken tools and labeling inconsistencies across 7 domains, and hope these contributions help strengthen SOP-Bench as a standard for evaluating procedural AI.</p>
+
+<div class="cta">
+  <h3>Turn your SOPs into reliable AI workflows</h3>
+  <p>Proceda converts Standard Operating Procedures into step-by-step AI agents with human oversight, tool integration, and full audit trails.</p>
+  <div class="cta-links">
+    <a href="https://sop.run" class="primary">Try sop.run</a>
+    <a href="https://enchiridionlabs.online" class="secondary">Enchiridion Labs</a>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

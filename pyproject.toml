@@ -66,3 +66,9 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[dependency-groups]
+dev = [
+    "google-cloud-aiplatform>=1.142.0",
+    "pandas>=3.0.1",
+]
+
